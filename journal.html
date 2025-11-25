@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Journal - Hunting Chronicle's</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>html{scroll-behavior:smooth}</style>
+</head>
+<body class="bg-gray-900 text-gray-300 font-sans">
+
+    <header class="fixed top-0 left-0 right-0 z-10 bg-gray-900/90 shadow-lg backdrop-blur-sm">
+        <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <a href="index.html" class="text-2xl font-bold text-orange-500 tracking-wider">Hunting Chronicle's</a>
+            <div class="space-x-6 hidden md:flex">
+                <a href="index.html" class="hover:text-orange-500 transition duration-300">Home</a>
+                <a href="journal.html" class="hover:text-orange-500 transition duration-300">Journal</a>
+                <a href="gallery.html" class="hover:text-orange-500 transition duration-300">Trophy Room</a>
+                <a href="contact.html" class="hover:text-orange-500 transition duration-300">Contact</a>
+            </div>
+            <button class="md:hidden text-gray-300 hover:text-orange-500">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+        </nav>
+    </header>
+
+    <main class="pt-24">
+        <section id="journal" class="py-16 bg-gray-800 min-h-screen">
+            <div class="container mx-auto px-4">
+                <h2 class="text-4xl font-bold text-center mb-12 text-orange-500">Latest Journal Entries & Tips</h2>
+                <div class="grid md:grid-cols-3 gap-8">
+                    <article class="bg-gray-900 rounded-lg overflow-hidden shadow-2xl">
+                        <img src="images/journal/scouting.jpg" alt="Journal Photo" class="w-full h-56 object-cover">
+                        <div class="p-6">
+                            <h3 class="text-xl font-semibold mb-2 text-white">Pre-Season Scouting: Keys to Success</h3>
+                            <p class="text-sm text-gray-400 mb-4">October 15, 2025 | Gear & Tactics</p>
+                            <p class="text-gray-300">Detailed look at terrain mapping, trail cam placement, and food plot analysis before opening day.</p>
+                            <a href="#" class="mt-4 inline-block text-orange-500 hover:text-orange-400 font-medium">Read More &rarr;</a>
+                        </div>
+                    </article>
+                    <article class="bg-gray-900 rounded-lg overflow-hidden shadow-2xl">
+                        <img src="images/journal/optics.jpg" alt="Journal Photo" class="w-full h-56 object-cover">
+                        <div class="p-6">
+                            <h3 class="text-xl font-semibold mb-2 text-white">Review: My Top 3 Budget Optics</h3>
+                            <p class="text-sm text-gray-400 mb-4">September 28, 2025 | Gear Review</p>
+                            <p class="text-gray-300">You don't need to break the bank for quality glass. Here are my favorite affordable binoculars and rangefinders.</p>
+                            <a href="#" class="mt-4 inline-block text-orange-500 hover:text-orange-400 font-medium">Read More &rarr;</a>
+                        </div>
+                    </article>
+                    <article class="bg-gray-900 rounded-lg overflow-hidden shadow-2xl">
+                        <img src="images/journal/field-dressing.jpg" alt="Journal Photo" class="w-full h-56 object-cover">
+                        <div class="p-6">
+                            <h3 class="text-xl font-semibold mb-2 text-white">Field Dressing 101: A Beginner's Guide</h3>
+                            <p class="text-sm text-gray-400 mb-4">November 1, 2025 | Processing</p>
+                            <p class="text-gray-300">Essential, step-by-step instructions for quick and clean field dressing to preserve your harvest.</p>
+                            <a href="#" class="mt-4 inline-block text-orange-500 hover:text-orange-400 font-medium">Read More &rarr;</a>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-900 border-t border-gray-800">
+        <div class="container mx-auto px-4 py-8 text-center">
+            <p>&copy; 2025 The Hunter's Chronicle. All rights reserved.</p>
+            <p class="text-sm text-gray-500 mt-2">Built with passion for the outdoors and Tailwind CSS.</p>
+        </div>
+    </footer>
+
+</body>
+</html>

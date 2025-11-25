@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trophy Room - Hunting Chronicle's</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>html{scroll-behavior:smooth}</style>
+</head>
+<body class="bg-gray-900 text-gray-300 font-sans">
+
+    <header class="fixed top-0 left-0 right-0 z-10 bg-gray-900/90 shadow-lg backdrop-blur-sm">
+        <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <a href="index.html" class="text-2xl font-bold text-orange-500 tracking-wider">Hunting Chronicle's</a>
+            <div class="space-x-6 hidden md:flex">
+                <a href="index.html" class="hover:text-orange-500 transition duration-300">Home</a>
+                <a href="journal.html" class="hover:text-orange-500 transition duration-300">Journal</a>
+                <a href="gallery.html" class="hover:text-orange-500 transition duration-300">Trophy Room</a>
+                <a href="contact.html" class="hover:text-orange-500 transition duration-300">Contact</a>
+            </div>
+            <button class="md:hidden text-gray-300 hover:text-orange-500">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+        </nav>
+    </header>
+
+    <main class="pt-24">
+        <section id="gallery" class="py-16 min-h-screen">
+            <div class="container mx-auto px-4">
+                <h2 class="text-4xl font-bold text-center mb-12 text-orange-500">The Trophy Room</h2>
+                <p class="text-center text-lg max-w-3xl mx-auto mb-10 text-gray-400">A gallery of successful hunts and moments of pure wilderness appreciation. Click any image to see a larger view.</p>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="overflow-hidden rounded-lg shadow-xl hover:shadow-orange-500/50 transition duration-300">
+                        <img src="images/gallery/sr11.jpeg" alt="Trophy Buck" class="gallery-thumb w-1/2 mx-auto h-auto object-cover transform hover:scale-105 transition duration-500 cursor-pointer" data-full="images/gallery/sr11.jpeg">
+                    </div>
+                    <div class="overflow-hidden rounded-lg shadow-xl hover:shadow-orange-500/50 transition duration-300">
+                        <img src="images/gallery/sr11ground.jpeg" alt="Hunting Spot" class="gallery-thumb w-1/2 mx-auto h-auto object-cover transform hover:scale-105 transition duration-500 cursor-pointer" data-full="images/gallery/sr11ground.jpeg">
+                    </div>
+                    <div class="overflow-hidden rounded-lg shadow-xl hover:shadow-orange-500/50 transition duration-300">
+                        <img src="images/gallery/sr11thumb.jpeg" alt="Wildlife" class="gallery-thumb w-1/2 mx-auto h-auto object-cover transform hover:scale-105 transition duration-500 cursor-pointer" data-full="images/gallery/sr11thumb.jpeg">
+                    </div>
+                    <div class="overflow-hidden rounded-lg shadow-xl hover:shadow-orange-500/50 transition duration-300">
+                        <img src="images/gallery/sr11wheeler.jpeg" alt="Another Trophy" class="gallery-thumb w-1/2 mx-auto h-auto object-cover transform hover:scale-105 transition duration-500 cursor-pointer" data-full="images/gallery/sr11wheeler.jpeg">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Lightbox modal with navigation -->
+        <div id="lightbox" class="fixed inset-0 hidden bg-black/80 z-50 items-center justify-center p-4">
+            <button id="lightbox-close" class="absolute top-6 right-6 text-white text-2xl">&times;</button>
+            <button id="lightbox-prev" class="absolute left-6 top-1/2 -translate-y-1/2 text-white text-3xl opacity-80">◀</button>
+            <button id="lightbox-next" class="absolute right-6 top-1/2 -translate-y-1/2 text-white text-3xl opacity-80">▶</button>
+            <img id="lightbox-img" src="" alt="Expanded image" class="max-w-full max-h-[90vh] rounded-lg shadow-2xl" />
+        </div>
+
+        <script>
+            (function(){
+                const thumbs = Array.from(document.querySelectorAll('.gallery-thumb'));
+                const lightbox = document.getElementById('lightbox');
+                const lightboxImg = document.getElementById('lightbox-img');
+                const closeBtn = document.getElementById('lightbox-close');
+                const prevBtn = document.getElementById('lightbox-prev');
+                const nextBtn = document.getElementById('lightbox-next');
+                let currentIndex = -1;
+
+                function showIndex(i) {
+                    if (!thumbs.length) return;
+                    currentIndex = (i + thumbs.length) % thumbs.length; // wrap
+                    const t = thumbs[currentIndex];
+                    const full = t.dataset.full || t.src;
+                    lightboxImg.src = full;
+                    lightbox.classList.remove('hidden');
+                    lightbox.classList.add('flex');
+                    document.body.style.overflow = 'hidden';
+                }
+
+                thumbs.forEach((t, idx) => {
+                    t.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        showIndex(idx);
+                    });
+                });
+
+                function close() {
+                    lightbox.classList.add('hidden');
+                    lightbox.classList.remove('flex');
+                    lightboxImg.src = '';
+                    document.body.style.overflow = '';
+                    currentIndex = -1;
+                }
+
+                function showNext() { showIndex(currentIndex + 1); }
+                function showPrev() { showIndex(currentIndex - 1); }
+
+                closeBtn.addEventListener('click', close);
+                nextBtn.addEventListener('click', (e) => { e.stopPropagation(); showNext(); });
+                prevBtn.addEventListener('click', (e) => { e.stopPropagation(); showPrev(); });
+
+                lightbox.addEventListener('click', (e) => {
+                    // close if clicking outside the image
+                    if (e.target === lightbox) close();
+                });
+
+                document.addEventListener('keydown', (e) => {
+                    if (currentIndex === -1) return; // not open
+                    if (e.key === 'Escape') close();
+                    if (e.key === 'ArrowRight') showNext();
+                    if (e.key === 'ArrowLeft') showPrev();
+                });
+            })();
+        </script>
+    </main>
+
+    <footer class="bg-gray-900 border-t border-gray-800">
+        <div class="container mx-auto px-4 py-8 text-center">
+            <p>&copy; 2025 The Hunter's Chronicle. All rights reserved.</p>
+            <p class="text-sm text-gray-500 mt-2">Built with passion for the outdoors and Tailwind CSS.</p>
+        </div>
+    </footer>
+
+</body>
+</html>
