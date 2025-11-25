@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contact - Hunting Chronicle's</title>
+    <title>Uploads - Hunting Chronicle's</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>html{scroll-behavior:smooth}</style>
 </head>
@@ -16,7 +16,7 @@
                 <a href="index.html" class="hover:text-orange-500 transition duration-300">Home</a>
                 <a href="journal.html" class="hover:text-orange-500 transition duration-300">Journal</a>
                 <a href="gallery.html" class="hover:text-orange-500 transition duration-300">Trophy Room</a>
-                <a href="contact.html" class="hover:text-orange-500 transition duration-300">Contact</a>
+                <a href="contact.html" class="hover:text-orange-500 transition duration-300">Uploads</a>
             </div>
             <button class="md:hidden text-gray-300 hover:text-orange-500">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
@@ -25,30 +25,125 @@
     </header>
 
     <main class="pt-24">
-        <section id="contact" class="py-16 bg-gray-800 min-h-screen">
+        <section id="uploads" class="py-16 bg-gray-800 min-h-screen">
             <div class="container mx-auto px-4 max-w-4xl text-center">
-                <h2 class="text-4xl font-bold mb-6 text-orange-500">Connect with Me</h2>
-                <p class="text-lg mb-10 text-gray-300">Have a question about gear, or just want to swap stories? Drop me a line!</p>
-                <form action="#" method="POST" class="space-y-6 text-left">
-                    <div>
-                        <label for="name" class="block text-sm font-medium text-gray-400">Name</label>
-                        <input type="text" id="name" name="name" required class="mt-1 block w-full rounded-md border-gray-700 bg-gray-900 text-white shadow-sm focus:border-orange-500 focus:ring-orange-500 p-3">
-                    </div>
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-gray-400">Email</label>
-                        <input type="email" id="email" name="email" required class="mt-1 block w-full rounded-md border-gray-700 bg-gray-900 text-white shadow-sm focus:border-orange-500 focus:ring-orange-500 p-3">
-                    </div>
-                    <div>
-                        <label for="message" class="block text-sm font-medium text-gray-400">Message</label>
-                        <textarea id="message" name="message" rows="4" required class="mt-1 block w-full rounded-md border-gray-700 bg-gray-900 text-white shadow-sm focus:border-orange-500 focus:ring-orange-500 p-3"></textarea>
-                    </div>
-                    <div class="text-center">
-                        <button type="submit" class="w-full md:w-auto bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-10 rounded-full transition duration-300 uppercase tracking-widest">Send Message</button>
-                    </div>
-                </form>
+                <h2 class="text-4xl font-bold mb-6 text-orange-500">Upload Your Photos</h2>
+                <p class="text-lg mb-10 text-gray-300">Share your hunting memories and wildlife photos with the community.</p>
+                
+                <div class="bg-gray-900 rounded-lg p-8 mb-12">
+                    <form id="uploadForm" class="space-y-6">
+                        <div class="border-2 border-dashed border-orange-500 rounded-lg p-8 cursor-pointer hover:bg-gray-800/50 transition" id="dropZone">
+                            <input type="file" id="fileInput" name="file" accept="image/*" multiple hidden>
+                            <svg class="w-12 h-12 mx-auto text-orange-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            <p class="text-gray-300">Click or drag images here to upload</p>
+                            <p class="text-sm text-gray-500 mt-2">PNG, JPG, GIF up to 10MB each</p>
+                        </div>
+
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-400 text-left">Your Name</label>
+                            <input type="text" id="name" name="name" required class="mt-1 block w-full rounded-md border-gray-700 bg-gray-900 text-white shadow-sm focus:border-orange-500 focus:ring-orange-500 p-3">
+                        </div>
+
+                        <div>
+                            <label for="description" class="block text-sm font-medium text-gray-400 text-left">Photo Description</label>
+                            <textarea id="description" name="description" rows="3" class="mt-1 block w-full rounded-md border-gray-700 bg-gray-900 text-white shadow-sm focus:border-orange-500 focus:ring-orange-500 p-3" placeholder="Tell us about your photos..."></textarea>
+                        </div>
+
+                        <div class="text-center">
+                            <button type="submit" class="w-full md:w-auto bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-10 rounded-full transition duration-300 uppercase tracking-widest">Upload Photos</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Preview section -->
+                <div id="previewContainer" class="hidden">
+                    <h3 class="text-2xl font-bold text-orange-500 mb-6">Preview</h3>
+                    <div id="previewGrid" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
+                </div>
             </div>
         </section>
     </main>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const uploadForm = document.getElementById('uploadForm');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewGrid = document.getElementById('previewGrid');
+        let selectedFiles = [];
+
+        // Click to select files
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        // Drag and drop
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('bg-gray-800/50');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('bg-gray-800/50');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('bg-gray-800/50');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            selectedFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+            if (selectedFiles.length === 0) {
+                alert('Please select image files only.');
+                return;
+            }
+            displayPreviews();
+        }
+
+        function displayPreviews() {
+            previewGrid.innerHTML = '';
+            selectedFiles.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const div = document.createElement('div');
+                    div.className = 'relative rounded-lg overflow-hidden shadow-lg';
+                    div.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview" class="w-full h-48 object-cover">
+                        <p class="text-xs text-gray-400 p-2 bg-gray-900/80 truncate">${file.name}</p>
+                    `;
+                    previewGrid.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            });
+            previewContainer.classList.remove('hidden');
+        }
+
+        uploadForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (selectedFiles.length === 0) {
+                alert('Please select at least one image to upload.');
+                return;
+            }
+            
+            const name = document.getElementById('name').value;
+            const description = document.getElementById('description').value;
+            
+            alert(`Thank you, ${name}! Your photos have been received.\n\nDescription: ${description || '(none)'}\n\nFiles: ${selectedFiles.length} image(s)`);
+            
+            // Reset form
+            uploadForm.reset();
+            fileInput.value = '';
+            selectedFiles = [];
+            previewContainer.classList.add('hidden');
+        });
+    </script>
 
     <footer class="bg-gray-900 border-t border-gray-800">
         <div class="container mx-auto px-4 py-8 text-center">
