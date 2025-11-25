@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Hunter's Chronicle - A Photo-Centric Journal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scroll behavior for smooth navigation */
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-300 font-sans">
+
+    <header class="fixed top-0 left-0 right-0 z-10 bg-gray-900/90 shadow-lg backdrop-blur-sm">
+        <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <a href="#hero" class="text-2xl font-bold text-green-500 tracking-wider">The Hunter's Chronicle</a>
+            <div class="space-x-6 hidden md:flex">
+                <a href="#story" class="hover:text-green-500 transition duration-300">My Story</a>
+                <a href="#journal" class="hover:text-green-500 transition duration-300">Journal</a>
+                <a href="#gallery" class="hover:text-green-500 transition duration-300">Trophy Room</a>
+                <a href="#contact" class="hover:text-green-500 transition duration-300">Contact</a>
+            </div>
+            <button class="md:hidden text-gray-300 hover:text-green-500">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+        </nav>
+    </header>
+
+    <section id="hero" class="relative pt-16 h-screen flex items-center justify-center">
+        <div class="absolute inset-0 bg-cover bg-center opacity-40" style="background-image: url('images/hero/BK.jpg')"></div>
+        
+        <div class="relative z-10 text-center p-8 bg-gray-900/60 rounded-xl max-w-4xl mx-4">
+            <h1 class="text-6xl md:text-8xl font-extrabold text-white leading-tight">
+                In the <span class="text-green-500">Woods</span>, I Find My Peace.
+            </h1>
+            <p class="mt-4 text-xl text-gray-200">
+                Sharing my journey, my trophies, and the true wilderness spirit.
+            </p>
+            <a href="#journal" class="mt-8 inline-block bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-8 rounded-full transition duration-300 uppercase tracking-widest">
+                Start Reading
+            </a>
+        </div>
+    </section>
+
+    <section id="story" class="py-20">
+        <div class="container mx-auto px-4 max-w-5xl">
+            <h2 class="text-4xl font-bold text-center mb-12 text-green-500">My Hunting Story</h2>
+            
+            <div class="md:flex items-start gap-10">
+                <div class="flex-shrink-0 mb-6 md:mb-0 w-full md:w-64">
+                    <img src="images/hero/portrait.jpeg" alt="Hunter Portrait" class="rounded-lg shadow-xl object-cover w-full h-auto">
+                </div>
+                
+                <div>
+                    <p class="mb-4 text-lg leading-relaxed">
+                        For over twenty years, the rhythm of the season has dictated my year. It's not just about the harvest; it’s about the stillness before dawn, the meticulous planning, and the deep respect for the land and the game. My first hunt was with my grandfather in the crisp Minnesota air, and that connection to the wild has only deepened. This site is a record of those experiences.
+                    </p>
+                    <p class="mb-4 text-lg leading-relaxed">
+                        From gear selection to tracking strategies in challenging weather, I aim to provide genuine, tested advice. The pursuit of the perfect buck is a lifelong endeavor, and every season teaches me something new. I believe in ethical hunting, conservation, and passing on the tradition.
+                    </p>
+                    <p class="text-lg font-semibold text-green-400">
+                        — Scott Rindahl, Dedicated Outdoorsman
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="w-full h-80 bg-cover bg-fixed bg-center" style="background-image: url('images/hero/divider-bg.jpg');"></div>
+
+    <section id="journal" class="py-20 bg-gray-800">
+        <div class="container mx-auto px-4">
+            <h2 class="text-4xl font-bold text-center mb-12 text-green-500">Latest Journal Entries & Tips</h2>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <article class="bg-gray-900 rounded-lg overflow-hidden shadow-2xl">
+                    <img src="images/journal/scouting.jpg" alt="Journal Photo" class="w-full h-56 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2 text-white">Pre-Season Scouting: Keys to Success</h3>
+                        <p class="text-sm text-gray-400 mb-4">October 15, 2025 | Gear & Tactics</p>
+                        <p class="text-gray-300">Detailed look at terrain mapping, trail cam placement, and food plot analysis before opening day.</p>
+                        <a href="#" class="mt-4 inline-block text-green-500 hover:text-green-400 font-medium">Read More &rarr;</a>
+                    </div>
+                </article>
+                
+                <article class="bg-gray-900 rounded-lg overflow-hidden shadow-2xl">
+                    <img src="images/journal/optics.jpg" alt="Journal Photo" class="w-full h-56 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2 text-white">Review: My Top 3 Budget Optics</h3>
+                        <p class="text-sm text-gray-400 mb-4">September 28, 2025 | Gear Review</p>
+                        <p class="text-gray-300">You don't need to break the bank for quality glass. Here are my favorite affordable binoculars and rangefinders.</p>
+                        <a href="#" class="mt-4 inline-block text-green-500 hover:text-green-400 font-medium">Read More &rarr;</a>
+                    </div>
+                </article>
+
+                <article class="bg-gray-900 rounded-lg overflow-hidden shadow-2xl">
+                    <img src="images/journal/field-dressing.jpg" alt="Journal Photo" class="w-full h-56 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2 text-white">Field Dressing 101: A Beginner's Guide</h3>
+                        <p class="text-sm text-gray-400 mb-4">November 1, 2025 | Processing</p>
+                        <p class="text-gray-300">Essential, step-by-step instructions for quick and clean field dressing to preserve your harvest.</p>
+                        <a href="#" class="mt-4 inline-block text-green-500 hover:text-green-400 font-medium">Read More &rarr;</a>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section id="gallery" class="py-20">
+        <div class="container mx-auto px-4">
+            <h2 class="text-4xl font-bold text-center mb-12 text-green-500">The Trophy Room</h2>
+            <p class="text-center text-lg max-w-3xl mx-auto mb-10 text-gray-400">A gallery of successful hunts and moments of pure wilderness appreciation. Click any image to see a larger view (Requires JavaScript).</p>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="overflow-hidden rounded-lg shadow-xl hover:shadow-green-500/50 transition duration-300">
+                    <img src="images/gallery/sr11.jpeg" alt="Trophy Buck" class="w-full h-auto object-cover transform hover:scale-105 transition duration-500 cursor-pointer">
+                </div>
+                <div class="overflow-hidden rounded-lg shadow-xl hover:shadow-green-500/50 transition duration-300">
+                    <img src="images/gallery/sr11ground.jpeg" alt="Hunting Spot" class="w-full h-auto object-cover transform hover:scale-105 transition duration-500 cursor-pointer">
+                </div>
+                <div class="overflow-hidden rounded-lg shadow-xl hover:shadow-green-500/50 transition duration-300">
+                    <img src="images/gallery/sr11thumb.jpeg" alt="Wildlife" class="w-full h-auto object-cover transform hover:scale-105 transition duration-500 cursor-pointer">
+                </div>
+                <div class="overflow-hidden rounded-lg shadow-xl hover:shadow-green-500/50 transition duration-300">
+                    <img src="images/gallery/sr11wheeler.jpeg" alt="Another Trophy" class="w-full h-auto object-cover transform hover:scale-105 transition duration-500 cursor-pointer">
+                </div>
+                </div>
+        </div>
+    </section>
+
+    <section id="contact" class="py-20 bg-gray-800">
+        <div class="container mx-auto px-4 max-w-4xl text-center">
+            <h2 class="text-4xl font-bold mb-6 text-green-500">Connect with Me</h2>
+            <p class="text-lg mb-10 text-gray-300">Have a question about gear, or just want to swap stories? Drop me a line!</p>
+            
+            <form action="#" method="POST" class="space-y-6 text-left">
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-400">Name</label>
+                    <input type="text" id="name" name="name" required class="mt-1 block w-full rounded-md border-gray-700 bg-gray-900 text-white shadow-sm focus:border-green-500 focus:ring-green-500 p-3">
+                </div>
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-400">Email</label>
+                    <input type="email" id="email" name="email" required class="mt-1 block w-full rounded-md border-gray-700 bg-gray-900 text-white shadow-sm focus:border-green-500 focus:ring-green-500 p-3">
+                </div>
+                <div>
+                    <label for="message" class="block text-sm font-medium text-gray-400">Message</label>
+                    <textarea id="message" name="message" rows="4" required class="mt-1 block w-full rounded-md border-gray-700 bg-gray-900 text-white shadow-sm focus:border-green-500 focus:ring-green-500 p-3"></textarea>
+                </div>
+                <div class="text-center">
+                    <button type="submit" class="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-10 rounded-full transition duration-300 uppercase tracking-widest">
+                        Send Message
+                    </button>
+                </div>
+            </form>
+            
+            <div class="mt-10 pt-6 border-t border-gray-700">
+                <p class="text-gray-400 mb-4">Follow the adventure:</p>
+                <div class="flex justify-center space-x-6">
+                    <a href="#" class="text-gray-400 hover:text-green-500 transition duration-300">
+                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M22.258 7.39h-1.688c-.628 0-1.137.509-1.137 1.137v1.688c0 .628.509 1.137 1.137 1.137h1.688c.628 0 1.137-.509 1.137-1.137V8.527c0-.628-.509-1.137-1.137-1.137zm-1.137 3.375h-1.138v-1.137h1.138v1.137zm-1.138-1.137h-1.137v-1.138h1.137v1.138z"></path></svg>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-green-500 transition duration-300">
+                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.297 10.999a3.75 3.75 0 013.75-3.75h.506a.75.75 0 000-1.5h-.506a5.25 5.25 0 00-5.25 5.25v2.335a.75.75 0 001.5 0v-2.335zM15.703 13a3.75 3.75 0 01-3.75 3.75h-.506a.75.75 0 000 1.5h.506a5.25 5.25 0 005.25-5.25v-2.335a.75.75 0 00-1.5 0v2.335z"></path></svg>
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <footer class="bg-gray-900 border-t border-gray-800">
+        <div class="container mx-auto px-4 py-8 text-center">
+            <p>&copy; 2025 The Hunter's Chronicle. All rights reserved.</p>
+            <p class="text-sm text-gray-500 mt-2">Built with passion for the outdoors and Tailwind CSS.</p>
+        </div>
+    </footer>
+
+</body>
+</html>
