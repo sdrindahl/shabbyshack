@@ -53,17 +53,21 @@
     <script>
         // Add your YouTube video URLs here
         const videos = [
-            'https://youtu.be/Rp44UiWZeNA?si=WGFuOO-0-oV0Egm4'
+            'https://youtu.be/Rp44UiWZeNA?si=WGFuOO-0-oV0Egm4',
+            'https://www.youtube.com/watch?v=muzneRfjZ_A',
+            'https://www.youtube.com/watch?v=YZ9aWQqD3K8'
         ];
 
         function getYouTubeEmbedUrl(url) {
             let videoId = '';
             if (url.includes('youtube.com/watch?v=')) {
-                videoId = url.split('v=')[1].split('&')[0];
+                const match = url.match(/v=([^&]+)/);
+                videoId = match ? match[1] : '';
             } else if (url.includes('youtu.be/')) {
-                videoId = url.split('youtu.be/')[1].split('?')[0];
+                const match = url.match(/youtu\.be\/([^?]+)/);
+                videoId = match ? match[1] : '';
             }
-            return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+            return videoId ? `https://www.youtube.com/embed/${videoId}?rel=0` : null;
         }
 
         function loadVideos() {
