@@ -78,14 +78,24 @@
 
         // Build embed src with preserved si param and enablejsapi for error detection
         function buildEmbedSrc(id, si) {
-            let src = `https://www.youtube.com/embed/${id}`;
-            const params = [];
-            if (si) params.push(`si=${si}`);
-            // enable JS API so we can listen for player errors
-            params.push('enablejsapi=1');
-            params.push('rel=0');
-            if (params.length) src += `?${params.join('&')}`;
-            return src;
+                    let src = `https://www.youtube.com/embed/${id}`;
+                    const params = [];
+                    if (si) params.push(`si=${si}`);
+                    // enable JS API so we can listen for player errors
+                    params.push('enablejsapi=1');
+                    params.push('rel=0');
+                    // Add origin param when available (helps YouTube validate the embed referrer).
+                    try {
+                        if (location && location.protocol && location.protocol.startsWith('http')) {
+                            const origin = encodeURIComponent(location.origin);
+                            params.push(`origin=${origin}`);
+                        }
+                    } catch (e) {
+                        // ignore — if origin can't be determined, we skip adding it
+                    }
+
+                    if (params.length) src += `?${params.join('&')}`;
+                    return src;
         }
 
         // Insert placeholders and then create YT players to detect errors (101/150/153 etc.)
