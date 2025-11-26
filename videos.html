@@ -9,38 +9,53 @@
         html {
             scroll-behavior: smooth;
         }
+        @media (max-width: 1023px) {
+            #desktopNav { display: none !important; }
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-300 font-sans">
 
-    <header class="fixed top-0 left-0 right-0 z-10 bg-gray-900/90 shadow-lg backdrop-blur-sm">
+    <!-- Desktop top nav -->
+    <header class="hidden lg:block fixed top-0 left-0 right-0 z-10 bg-gray-900/90 shadow-lg backdrop-blur-sm">
         <nav class="container mx-auto px-4 py-3">
-            <div class="flex justify-between items-center">
-                <div class="hidden md:flex md:flex-1 md:justify-center space-x-6" id="desktopNav">
-                    <a href="index.html" class="hover:text-orange-500 transition duration-300">Home</a>
-                    <a href="journal.html" class="hover:text-orange-500 transition duration-300">Journal</a>
-                    <a href="gallery.html" class="hover:text-orange-500 transition duration-300">Trophy Room</a>
-                    <a href="videos.html" class="hover:text-orange-500 transition duration-300">Videos</a>
-                    <a href="contact.html" class="hover:text-orange-500 transition duration-300">Uploads</a>
-                </div>
-                <button id="mobileMenuButton" class="block md:hidden ml-auto flex-shrink-0 text-gray-200 hover:text-orange-500" aria-label="Open menu" aria-expanded="false" aria-controls="mobileNav">
-                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
-                </button>
+            <div class="flex items-center justify-center space-x-6">
+                <a href="index.html" class="hover:text-orange-500 transition duration-300">Home</a>
+                <a href="journal.html" class="hover:text-orange-500 transition duration-300">Journal</a>
+                <a href="gallery.html" class="hover:text-orange-500 transition duration-300">Trophy Room</a>
+                <a href="videos.html" class="hover:text-orange-500 transition duration-300">Videos</a>
+                <a href="contact.html" class="hover:text-orange-500 transition duration-300">Uploads</a>
             </div>
         </nav>
-        <div id="mobileBackdrop" class="md:hidden fixed inset-0 bg-black/50 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300 ease-out z-40"></div>
-        <div id="mobileNav" class="md:hidden fixed top-16 left-0 right-0 border-t border-gray-800 bg-gray-900/95 shadow-2xl transform -translate-y-full transition-transform duration-300 ease-out overflow-hidden z-50">
-            <div class="container mx-auto px-4 py-3 space-y-3">
-                <a href="index.html" class="block hover:text-orange-500 transition">Home</a>
-                <a href="journal.html" class="block hover:text-orange-500 transition">Journal</a>
-                <a href="gallery.html" class="block hover:text-orange-500 transition">Trophy Room</a>
-                <a href="videos.html" class="block hover:text-orange-500 transition">Videos</a>
-                <a href="contact.html" class="block hover:text-orange-500 transition">Uploads</a>
-            </div>
-        </div>
     </header>
 
-    <main class="pt-24 pb-16 min-h-screen">
+    <!-- Mobile bottom nav -->
+    <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-gray-900/95 border-t border-gray-800 backdrop-blur-sm" style="z-index: 9999; padding-bottom: env(safe-area-inset-bottom);">
+        <div class="flex justify-around items-center py-2">
+            <a href="index.html" class="flex flex-col items-center py-2 px-3 text-gray-400 hover:text-orange-500">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                <span class="text-xs mt-1">Home</span>
+            </a>
+            <a href="journal.html" class="flex flex-col items-center py-2 px-3 text-gray-400 hover:text-orange-500">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                <span class="text-xs mt-1">Journal</span>
+            </a>
+            <a href="gallery.html" class="flex flex-col items-center py-2 px-3 text-gray-400 hover:text-orange-500">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                <span class="text-xs mt-1">Trophy</span>
+            </a>
+            <a href="videos.html" class="flex flex-col items-center py-2 px-3 text-orange-500">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span class="text-xs mt-1">Videos</span>
+            </a>
+            <a href="contact.html" class="flex flex-col items-center py-2 px-3 text-gray-400 hover:text-orange-500">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                <span class="text-xs mt-1">Upload</span>
+            </a>
+        </div>
+    </nav>
+
+    <main class="lg:pt-24 pb-20 lg:pb-0 min-h-screen">
         <section id="videos" class="py-16">
             <div class="container mx-auto px-4">
                 <h1 class="text-4xl font-bold mb-2 text-center">
@@ -72,6 +87,40 @@
         </div>
     </div>
 
+    <!-- Meatball menu (mobile) -->
+    <button id="meatballButton" class="lg:hidden fixed bottom-20 right-3 bg-gray-800 text-gray-200 hover:text-orange-500 hover:bg-gray-700 rounded-full p-3 shadow-lg" aria-label="Open navigation menu" aria-expanded="false" aria-controls="meatballMenu" style="z-index:10000;">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm0 5.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm0 5.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3z"></path></svg>
+    </button>
+    <div id="meatballBackdrop" class="lg:hidden fixed inset-0 bg-black/40 opacity-0 pointer-events-none transition-opacity duration-200" style="z-index:9998;"></div>
+    <div id="meatballMenu" class="lg:hidden fixed bottom-0 left-0 right-0 bg-gray-900/95 border-t border-gray-800 transform translate-y-full transition-transform duration-200" style="z-index:9999; padding-bottom: env(safe-area-inset-bottom);">
+        <div class="container mx-auto px-4 py-3 space-y-2">
+            <button id="meatballClose" class="w-full text-left py-2 text-gray-400 hover:text-orange-500">Close</button>
+            <a href="index.html" class="block py-2 hover:text-orange-500">Home</a>
+            <a href="journal.html" class="block py-2 hover:text-orange-500">Journal</a>
+            <a href="gallery.html" class="block py-2 hover:text-orange-500">Trophy Room</a>
+            <a href="videos.html" class="block py-2 hover:text-orange-500">Videos</a>
+            <a href="contact.html" class="block py-2 hover:text-orange-500">Uploads</a>
+        </div>
+    </div>
+
+    <script>
+    (function(){
+        const btn = document.getElementById('meatballButton');
+        const menu = document.getElementById('meatballMenu');
+        const backdrop = document.getElementById('meatballBackdrop');
+        const closeBtn = document.getElementById('meatballClose');
+        if (!btn || !menu || !backdrop) return;
+        function open(){ menu.style.transform = 'translateY(0)'; backdrop.style.opacity = '1'; backdrop.style.pointerEvents = 'auto'; btn.setAttribute('aria-expanded','true'); btn.style.opacity='0'; btn.style.pointerEvents='none'; }
+        function close(){ menu.style.transform = 'translateY(100%)'; backdrop.style.opacity = '0'; backdrop.style.pointerEvents = 'none'; btn.setAttribute('aria-expanded','false'); btn.style.opacity='1'; btn.style.pointerEvents='auto'; }
+        btn.addEventListener('click', () => {
+            const isOpen = btn.getAttribute('aria-expanded') === 'true';
+            if (isOpen) close(); else open();
+        });
+        backdrop.addEventListener('click', close);
+        if (closeBtn) closeBtn.addEventListener('click', close);
+        menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setTimeout(close, 200)));
+    })();
+    </script>
     <footer class="bg-gray-800 text-center py-6 border-t border-gray-700">
         <p>&copy; 2024 Hunting Chronicle's. All rights reserved.</p>
     </footer>
