@@ -54,8 +54,8 @@
                 <!-- iframe will be injected here. keeps 16:9 -->
                 <div id="videoFrameWrapper" style="position:relative;width:100%;padding-top:56.25%;">
                     <!-- Prev/Next controls -->
-                    <button id="videoPrev" class="absolute left-2 top-1/2 -translate-y-1/2 bg-gray-800/70 hover:bg-gray-700 text-white rounded-full p-2">◀</button>
-                    <button id="videoNext" class="absolute right-2 top-1/2 -translate-y-1/2 bg-gray-800/70 hover:bg-gray-700 text-white rounded-full p-2">▶</button>
+                    <button id="videoPrev" class="absolute left-2 top-1/2 -translate-y-1/2 bg-gray-800/70 hover:bg-gray-700 text-white rounded-full p-2 z-10">◀</button>
+                    <button id="videoNext" class="absolute right-2 top-1/2 -translate-y-1/2 bg-gray-800/70 hover:bg-gray-700 text-white rounded-full p-2 z-10">▶</button>
                 </div>
             </div>
         </div>
@@ -93,25 +93,27 @@
 
         // Build embed src with preserved si param and enablejsapi for error detection
         function buildEmbedSrc(id, si, opts = {}) {
-                    let src = `https://www.youtube.com/embed/${id}`;
-                    const params = [];
-                    if (si) params.push(`si=${si}`);
-                    // enable JS API so we can listen for player errors
-                    params.push('enablejsapi=1');
-                    params.push('rel=0');
+            let src = `https://www.youtube.com/embed/${id}`;
+            const params = [];
+            if (si) params.push(`si=${si}`);
+            // enable JS API so we can listen for player errors
+            params.push('enablejsapi=1');
+            params.push('rel=0');
+            params.push('playsinline=1');
+            params.push('modestbranding=1');
             if (opts.autoplay) params.push('autoplay=1');
-                    // Add origin param when available (helps YouTube validate the embed referrer).
-                    try {
-                        if (location && location.protocol && location.protocol.startsWith('http')) {
-                            const origin = encodeURIComponent(location.origin);
-                            params.push(`origin=${origin}`);
-                        }
-                    } catch (e) {
-                        // ignore — if origin can't be determined, we skip adding it
-                    }
+            // Add origin param when available (helps YouTube validate the embed referrer).
+            try {
+                if (location && location.protocol && location.protocol.startsWith('http')) {
+                    const origin = encodeURIComponent(location.origin);
+                    params.push(`origin=${origin}`);
+                }
+            } catch (e) {
+                // ignore — if origin can't be determined, we skip adding it
+            }
 
-                    if (params.length) src += `?${params.join('&')}`;
-                    return src;
+            if (params.length) src += `?${params.join('&')}`;
+            return src;
         }
 
         // Insert thumbnails and wire click -> modal player
@@ -244,6 +246,7 @@
             iframe.style.left = '0';
             iframe.style.width = '100%';
             iframe.style.height = '100%';
+            iframe.style.zIndex = '0';
 
             iframe.src = buildEmbedSrc(id, si, { autoplay: true });
             videoFrameWrapper.appendChild(iframe);
@@ -264,9 +267,23 @@
                         currentPlayer = null;
                     }
                     currentPlayer = new YT.Player('modal-player', {
+                        playerVars: { autoplay: 1, rel: 0, playsinline: 1, modestbranding: 1 },
                         events: {
-                            onError: function() {
-                                videoFrameWrapper.innerHTML = `<div class="p-6 text-center"><a href="${original}" target="_blank" class="text-orange-500 hover:text-orange-400 underline">Unable to embed video<br><small>Click to watch on YouTube</small></a></div>`;
+                            onReady: function(e){
+                                try {
+                                    e.target.playVideo();
+                                    setTimeout(() => {
+                                        try {
+                                            if (typeof YT !== 'undefined' && YT.PlayerState && e.target.getPlayerState() !== YT.PlayerState.PLAYING) {
+                                                e.target.mute();
+                                                e.target.playVideo();
+                                            }
+                                        } catch (_) {}
+                                    }, 700);
+                                } catch(_) {}
+                            },
+                            onError: function(){
+                                videoFrameWrapper.innerHTML = `<div class=\"p-6 text-center\"><a href=\"${original}\" target=\"_blank\" class=\"text-orange-500 hover:text-orange-400 underline\">Unable to embed video<br><small>Click to watch on YouTube</small></a></div>`;
                             }
                         }
                     });
@@ -303,6 +320,12 @@
         }
         if (videoPrev) videoPrev.addEventListener('click', (e) => { e.stopPropagation(); if (currentIndex > 0) showByIndex(currentIndex - 1); });
         if (videoNext) videoNext.addEventListener('click', (e) => { e.stopPropagation(); if (currentIndex >= 0 && currentIndex < videosData.length - 1) showByIndex(currentIndex + 1); });
+        // clicking the video area should unmute if we had to mute for autoplay
+        if (videoFrameWrapper) videoFrameWrapper.addEventListener('click', (e) => {
+            if (currentPlayer && typeof currentPlayer.unMute === 'function') {
+                try { currentPlayer.unMute(); currentPlayer.playVideo(); } catch (_) {}
+            }
+        });
         // keyboard: Esc to close, arrows to navigate
         document.addEventListener('keydown', (e) => {
             if (modal.classList.contains('hidden')) return;
