@@ -15,18 +15,22 @@
 <body class="bg-gray-900 text-gray-300 font-sans">
 
     <header class="fixed top-0 left-0 right-0 z-10 bg-gray-900/90 shadow-lg backdrop-blur-sm">
-        <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
-            <a href="index.html" class="text-2xl font-bold text-orange-500 tracking-wider">Hunting Chronicle's</a>
-            <div class="space-x-6 hidden md:flex" id="desktopNav">
-                <a href="index.html" class="hover:text-orange-500 transition duration-300">Home</a>
-                <a href="journal.html" class="hover:text-orange-500 transition duration-300">Journal</a>
-                <a href="gallery.html" class="hover:text-orange-500 transition duration-300">Trophy Room</a>
-                <a href="videos.html" class="hover:text-orange-500 transition duration-300">Videos</a>
-                <a href="contact.html" class="hover:text-orange-500 transition duration-300">Uploads</a>
+        <nav class="container mx-auto px-4 py-3">
+            <div class="flex justify-between items-center">
+                <!-- Desktop nav -->
+                <div class="hidden md:flex md:flex-1 md:justify-center space-x-6" id="desktopNav">
+                    <a href="index.html" class="hover:text-orange-500 transition duration-300">Home</a>
+                    <a href="journal.html" class="hover:text-orange-500 transition duration-300">Journal</a>
+                    <a href="gallery.html" class="hover:text-orange-500 transition duration-300">Trophy Room</a>
+                    <a href="videos.html" class="hover:text-orange-500 transition duration-300">Videos</a>
+                    <a href="contact.html" class="hover:text-orange-500 transition duration-300">Uploads</a>
+                </div>
+                
+                <!-- Mobile: only hamburger, right-aligned -->
+                <button id="mobileMenuButton" class="block md:hidden ml-auto flex-shrink-0 text-gray-200 hover:text-orange-500" aria-label="Open menu" aria-expanded="false" aria-controls="mobileNav">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
             </div>
-            <button id="mobileMenuButton" class="md:hidden text-gray-300 hover:text-orange-500" aria-label="Open menu" aria-expanded="false" aria-controls="mobileNav">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
-            </button>
         </nav>
         <!-- Mobile backdrop -->
         <div id="mobileBackdrop" class="md:hidden fixed inset-0 bg-black/50 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300 ease-out z-40"></div>
