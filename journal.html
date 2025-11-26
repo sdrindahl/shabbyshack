@@ -12,17 +12,27 @@
     <header class="fixed top-0 left-0 right-0 z-10 bg-gray-900/90 shadow-lg backdrop-blur-sm">
         <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
             <a href="index.html" class="text-2xl font-bold text-orange-500 tracking-wider">Hunting Chronicle's</a>
-            <div class="space-x-6 hidden md:flex">
+            <div class="space-x-6 hidden md:flex" id="desktopNav">
                 <a href="index.html" class="hover:text-orange-500 transition duration-300">Home</a>
                 <a href="journal.html" class="hover:text-orange-500 transition duration-300">Journal</a>
                 <a href="gallery.html" class="hover:text-orange-500 transition duration-300">Trophy Room</a>
                 <a href="videos.html" class="hover:text-orange-500 transition duration-300">Videos</a>
                 <a href="contact.html" class="hover:text-orange-500 transition duration-300">Uploads</a>
             </div>
-            <button class="md:hidden text-gray-300 hover:text-orange-500">
+            <button id="mobileMenuButton" class="md:hidden text-gray-300 hover:text-orange-500" aria-label="Open menu" aria-expanded="false" aria-controls="mobileNav">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
             </button>
         </nav>
+        <div id="mobileBackdrop" class="md:hidden fixed inset-0 bg-black/50 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300 ease-out z-40"></div>
+        <div id="mobileNav" class="md:hidden fixed top-16 left-0 right-0 border-t border-gray-800 bg-gray-900/95 shadow-2xl transform -translate-y-full transition-transform duration-300 ease-out overflow-hidden z-50">
+            <div class="container mx-auto px-4 py-3 space-y-3">
+                <a href="index.html" class="block hover:text-orange-500 transition">Home</a>
+                <a href="journal.html" class="block hover:text-orange-500 transition">Journal</a>
+                <a href="gallery.html" class="block hover:text-orange-500 transition">Trophy Room</a>
+                <a href="videos.html" class="block hover:text-orange-500 transition">Videos</a>
+                <a href="contact.html" class="block hover:text-orange-500 transition">Uploads</a>
+            </div>
+        </div>
     </header>
 
     <main class="pt-24">
@@ -69,5 +79,18 @@
         </div>
     </footer>
 
+<script>
+(function(){
+  const btn = document.getElementById('mobileMenuButton');
+  const panel = document.getElementById('mobileNav');
+  const backdrop = document.getElementById('mobileBackdrop');
+  if (!btn || !panel || !backdrop) return;
+  function closeMenu() { panel.style.transform = 'translateY(-100%)'; backdrop.style.opacity = '0'; backdrop.style.pointerEvents = 'none'; btn.setAttribute('aria-expanded', 'false'); }
+  function openMenu() { panel.style.transform = 'translateY(0)'; backdrop.style.opacity = '1'; backdrop.style.pointerEvents = 'auto'; btn.setAttribute('aria-expanded', 'true'); }
+  btn.addEventListener('click', function(){ const isOpen = backdrop.style.pointerEvents === 'auto'; if (isOpen) closeMenu(); else openMenu(); });
+  backdrop.addEventListener('click', closeMenu);
+  panel.querySelectorAll('a').forEach(a => a.addEventListener('click', () => { setTimeout(closeMenu, 250); }));
+})();
+</script>
 </body>
 </html>
