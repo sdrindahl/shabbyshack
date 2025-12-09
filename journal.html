@@ -95,6 +95,7 @@
         </section>
     </main>
     <script>
+
     // Modal script
     let editingArticle = null;
     // Add edit button handler to a story tile (must be defined before any use)
@@ -109,6 +110,55 @@
             document.getElementById('editModal').dataset.imageData = imageData || '';
         });
     }
+
+    // --- LOAD STORIES FROM API ON PAGE LOAD ---
+    async function loadStoriesFromAPI() {
+        const apiUrl = 'https://shabbyshack.up.railway.app/stories';
+        const grid = document.getElementById('journalGrid') || document.querySelector('.grid.md\:grid-cols-3') || document.querySelector('.grid');
+        // Remove all existing story articles (but keep modals and emptyMessage)
+        Array.from(grid.querySelectorAll('article')).forEach(a => a.remove());
+        let emptyMsg = document.getElementById('emptyMessage');
+        if (emptyMsg) emptyMsg.remove();
+        try {
+            const res = await fetch(apiUrl);
+            if (!res.ok) throw new Error('Failed to fetch stories');
+            const stories = await res.json();
+            if (!stories.length) {
+                const msg = document.createElement('div');
+                msg.id = 'emptyMessage';
+                msg.className = 'col-span-3 text-center text-gray-400 text-lg py-12';
+                msg.textContent = 'No stories yet—be the first to share!';
+                grid.appendChild(msg);
+                return;
+            }
+            stories.forEach(story => {
+                const article = document.createElement('article');
+                article.className = 'bg-gray-900 rounded-lg overflow-hidden shadow-2xl';
+                let imgTag = story.imageData ? `<img src='${story.imageData}' alt='User Story Image' class='w-full h-56 object-cover'>` : '';
+                article.innerHTML = `
+                    ${imgTag}
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2 text-white">${story.name || 'Anonymous'}'s Story</h3>
+                        <p class="text-sm text-gray-400 mb-4">${story.date ? new Date(story.date).toLocaleDateString() : ''} | Shared Memory</p>
+                        <p class="text-gray-300">${story.text}</p>
+                        <button class='edit-story-btn bg-orange-500 hover:bg-orange-600 text-white font-semibold py-1 px-4 rounded-lg mt-4'>Edit</button>
+                    </div>
+                `;
+                addEditHandler(article, story.name, story.text, story.imageData);
+                grid.appendChild(article);
+            });
+        } catch (err) {
+            const msg = document.createElement('div');
+            msg.id = 'emptyMessage';
+            msg.className = 'col-span-3 text-center text-red-400 text-lg py-12';
+            msg.textContent = 'Error loading stories.';
+            grid.appendChild(msg);
+            console.error(err);
+        }
+    }
+
+    // Load stories on page load
+    window.addEventListener('DOMContentLoaded', loadStoriesFromAPI);
 
     document.getElementById('openModalBtn').addEventListener('click', function() {
         document.getElementById('storyModal').classList.remove('hidden');
