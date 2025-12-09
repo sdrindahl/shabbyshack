@@ -1,8 +1,5 @@
 // ...existing code...
-// Debug root route to confirm server is running
-app.get('/', (req, res) => {
-  res.send('API is running');
-});
+
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -17,6 +14,11 @@ const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
 
 app.use(cors());
 app.use(express.json());
+
+// Debug root route to confirm server is running
+app.get('/', (req, res) => {
+  res.send('API is running');
+});
 
 // --- SQLite setup ---
 // Ensure /data directory exists (for Railway persistent storage)
