@@ -17,6 +17,7 @@
     <!-- Desktop top nav -->
     <header class="hidden lg:block fixed top-0 left-0 right-0 z-10 bg-gray-900/90 shadow-lg backdrop-blur-sm">
         <h2 class="text-4xl font-bold text-center mb-12 text-orange-500">Latest Journal Entries & Tips</h2>
+        
             <div class="flex items-center justify-center space-x-6">
                 <a href="index.html" class="hover:text-orange-500 transition duration-300">Home</a>
                 <a href="journal.html" class="hover:text-orange-500 transition duration-300">Journal</a>
@@ -56,19 +57,25 @@
     <main class="lg:pt-24 pb-20 lg:pb-0">
         <section id="journal" class="py-16 bg-gray-800 min-h-screen">
             <div class="container mx-auto px-4">
-                <h2 class="text-4xl font-bold text-center mb-12 text-orange-500">Latest Journal Entries & Tips</h2>
-                <div class="grid md:grid-cols-3 gap-8">
-                    <article class="bg-gray-900 rounded-lg overflow-hidden shadow-2xl">
-                        <img src="images/journal/scouting.jpg" alt="Journal Photo" class="w-full h-56 object-cover">
-                        <div class="p-6">
-                            <h3 class="text-xl font-semibold mb-2 text-white">Pre-Season Scouting: Keys to Success</h3>
-                            <p class="text-sm text-gray-400 mb-4">October 15, 2025 | Gear & Tactics</p>
-                            <p class="text-gray-300">Detailed look at terrain mapping, trail cam placement, and food plot analysis before opening day.</p>
-                            <a href="#" class="mt-4 inline-block text-orange-500 hover:text-orange-400 font-medium">Read More &rarr;</a>
+                    <button id="openModalBtn" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-6 rounded-lg shadow transition duration-200 mb-8">
+                        Share Your Story or Memory
+                    </button>
+                    <div class="grid md:grid-cols-3 gap-8" id="journalGrid">
+                        <div id="emptyMessage" class="col-span-3 text-center text-gray-400 text-lg py-12">No stories yet—be the first to share!</div>
+                    </div>
+
+                    <!-- Modal -->
+                    <div id="storyModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 hidden">
+                        <div class="bg-gray-900 rounded-lg shadow-xl p-8 w-full max-w-md relative">
+                            <button id="closeModalBtn" class="absolute top-2 right-2 text-gray-400 hover:text-orange-500 text-2xl font-bold">&times;</button>
+                            <h3 class="text-2xl font-bold mb-4 text-orange-500 text-center">Share Your Story or Memory</h3>
+                            <form id="storyForm">
+                                <input id="storyName" type="text" placeholder="Your Name" class="w-full mb-3 px-4 py-2 rounded bg-gray-800 text-gray-200" />
+                                <textarea id="storyText" placeholder="Your Story or Memory" class="w-full mb-3 px-4 py-2 rounded bg-gray-800 text-gray-200" rows="5"></textarea>
+                                <input id="storyImage" type="file" accept="image/*" class="w-full mb-3 px-4 py-2 rounded bg-gray-800 text-gray-200" />
+                                <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-6 rounded-lg w-full">Submit</button>
+                            </form>
                         </div>
-                    </article>
-                    <article class="bg-gray-900 rounded-lg overflow-hidden shadow-2xl">
-                        <img src="images/journal/optics.jpg" alt="Journal Photo" class="w-full h-56 object-cover">
                         <div class="p-6">
                             <h3 class="text-xl font-semibold mb-2 text-white">Review: My Top 3 Budget Optics</h3>
                             <p class="text-sm text-gray-400 mb-4">September 28, 2025 | Gear Review</p>
@@ -89,6 +96,61 @@
             </div>
         </section>
     </main>
+    <script>
+    // Modal script
+    document.getElementById('openModalBtn').addEventListener('click', function() {
+        document.getElementById('storyModal').classList.remove('hidden');
+    });
+    document.getElementById('closeModalBtn').addEventListener('click', function() {
+        document.getElementById('storyModal').classList.add('hidden');
+    });
+    document.getElementById('storyModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.add('hidden');
+        }
+    });
+    // Add story tile on submit
+    document.getElementById('storyForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var name = document.getElementById('storyName').value.trim() || 'Anonymous';
+        var text = document.getElementById('storyText').value.trim();
+        var imageInput = document.getElementById('storyImage');
+        if (!text) return;
+        var grid = document.getElementById('journalGrid');
+        var emptyMsg = document.getElementById('emptyMessage');
+        if (emptyMsg) emptyMsg.remove();
+        var article = document.createElement('article');
+        article.className = 'bg-gray-900 rounded-lg overflow-hidden shadow-2xl';
+        var imageHTML = '';
+        if (imageInput.files && imageInput.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(evt) {
+                imageHTML = `<img src='${evt.target.result}' alt='User Story Image' class='w-full h-56 object-cover'>`;
+                article.innerHTML = `
+                    ${imageHTML}
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2 text-white">${name}'s Story</h3>
+                        <p class="text-sm text-gray-400 mb-4">${new Date().toLocaleDateString()} | Shared Memory</p>
+                        <p class="text-gray-300">${text}</p>
+                    </div>
+                `;
+                grid.prepend(article);
+            };
+            reader.readAsDataURL(imageInput.files[0]);
+        } else {
+            article.innerHTML = `
+                <div class="p-6">
+                    <h3 class="text-xl font-semibold mb-2 text-white">${name}'s Story</h3>
+                    <p class="text-sm text-gray-400 mb-4">${new Date().toLocaleDateString()} | Shared Memory</p>
+                    <p class="text-gray-300">${text}</p>
+                </div>
+            `;
+            grid.prepend(article);
+        }
+        document.getElementById('storyModal').classList.add('hidden');
+        document.getElementById('storyForm').reset();
+    });
+    </script>
 
         <!-- Meatball menu (mobile) -->
         <button id="meatballButton" class="lg:hidden fixed bottom-20 right-3 bg-gray-800 text-gray-200 hover:text-orange-500 hover:bg-gray-700 rounded-full p-3 shadow-lg" aria-label="Open navigation menu" aria-expanded="false" aria-controls="meatballMenu" style="z-index:10000;">
@@ -107,6 +169,39 @@
         </div>
 
         <script>
+                // Modal script
+                document.getElementById('openModalBtn').addEventListener('click', function() {
+                    document.getElementById('storyModal').classList.remove('hidden');
+                });
+                document.getElementById('closeModalBtn').addEventListener('click', function() {
+                    document.getElementById('storyModal').classList.add('hidden');
+                });
+                document.getElementById('storyModal').addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.classList.add('hidden');
+                    }
+                });
+
+                // Add story tile on submit
+                document.getElementById('storyForm').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    var name = document.getElementById('storyName').value.trim() || 'Anonymous';
+                    var text = document.getElementById('storyText').value.trim();
+                    if (!text) return;
+                    var grid = document.querySelector('.grid.md\:grid-cols-3');
+                    var article = document.createElement('article');
+                    article.className = 'bg-gray-900 rounded-lg overflow-hidden shadow-2xl';
+                    article.innerHTML = `
+                        <div class="p-6">
+                            <h3 class="text-xl font-semibold mb-2 text-white">${name}'s Story</h3>
+                            <p class="text-sm text-gray-400 mb-4">${new Date().toLocaleDateString()} | Shared Memory</p>
+                            <p class="text-gray-300">${text}</p>
+                        </div>
+                    `;
+                    grid.prepend(article);
+                    document.getElementById('storyModal').classList.add('hidden');
+                    document.getElementById('storyForm').reset();
+                });
         (function(){
             const btn = document.getElementById('meatballButton');
             const menu = document.getElementById('meatballMenu');
@@ -133,5 +228,36 @@
     </footer>
 
 
-</body>
-</html>
+        <script>
+        // Meatball menu script
+        (function(){
+            const btn = document.getElementById('meatballButton');
+            const menu = document.getElementById('meatballMenu');
+            const backdrop = document.getElementById('meatballBackdrop');
+            const closeBtn = document.getElementById('meatballClose');
+            if (!btn || !menu || !backdrop) return;
+            function open(){ menu.style.transform = 'translateY(0)'; backdrop.style.opacity = '1'; backdrop.style.pointerEvents = 'auto'; btn.setAttribute('aria-expanded','true'); btn.style.opacity='0'; btn.style.pointerEvents='none'; }
+            function close(){ menu.style.transform = 'translateY(100%)'; backdrop.style.opacity = '0'; backdrop.style.pointerEvents = 'none'; btn.setAttribute('aria-expanded','false'); btn.style.opacity='1'; btn.style.pointerEvents='auto'; }
+            btn.addEventListener('click', () => {
+                const isOpen = btn.getAttribute('aria-expanded') === 'true';
+                if (isOpen) close(); else open();
+            });
+            backdrop.addEventListener('click', close);
+            if (closeBtn) closeBtn.addEventListener('click', close);
+            menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setTimeout(close, 200)));
+        })();
+
+        // Modal script
+        document.getElementById('openModalBtn').addEventListener('click', function() {
+            document.getElementById('storyModal').classList.remove('hidden');
+        });
+        document.getElementById('closeModalBtn').addEventListener('click', function() {
+            document.getElementById('storyModal').classList.add('hidden');
+        });
+        // Optional: close modal when clicking outside modal content
+        document.getElementById('storyModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.add('hidden');
+            }
+        });
+        </script>
