@@ -1,3 +1,7 @@
+// Debug root route to confirm server is running
+app.get('/', (req, res) => {
+  res.send('API is running');
+});
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
