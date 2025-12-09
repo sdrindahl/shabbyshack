@@ -13,7 +13,13 @@ app.use(cors());
 app.use(express.json());
 
 // --- SQLite setup ---
-const db = new sqlite3.Database('./stories.db');
+const db = new sqlite3.Database('/data/stories.db');
+
+// Log all requests for debugging
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
 db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -65,7 +71,10 @@ app.post('/auth/login', (req, res) => {
 // --- Story Routes ---
 app.get('/stories', (req, res) => {
   db.all('SELECT * FROM stories ORDER BY created_at DESC', [], (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
+    if (err) {
+      console.error('Error fetching stories:', err);
+      return res.status(500).json({ error: err.message });
+    }
     res.json(rows);
   });
 });
