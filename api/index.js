@@ -1,4 +1,9 @@
+// ...existing code...
+// Place this after app is initialized
 // Debug root route to confirm server is running
+
+// ...after const app = express();
+// ...existing code...
 app.get('/', (req, res) => {
   res.send('API is running');
 });
