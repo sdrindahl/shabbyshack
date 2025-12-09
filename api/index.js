@@ -1,14 +1,4 @@
-// Debug root route to confirm server is running
-app.get('/', (req, res) => {
-  res.send('API is running');
-});
 
-// Catch-all error handler for debugging
-app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
-  res.status(500).json({ error: 'Internal server error', details: err.message });
-});
-// ...existing code...
 
 require('dotenv').config();
 const express = require('express');
