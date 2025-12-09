@@ -16,6 +16,7 @@ app.use(cors());
 app.use(express.json());
 
 // Debug root route to confirm server is running
+app.get('/ping', (req, res) => res.send('pong'));
 app.get('/', (req, res) => {
   res.send('API is running');
 });
