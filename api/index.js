@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
+const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
@@ -13,6 +14,11 @@ app.use(cors());
 app.use(express.json());
 
 // --- SQLite setup ---
+// Ensure /data directory exists (for Railway persistent storage)
+const dataDir = '/data';
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir);
+}
 const db = new sqlite3.Database('/data/stories.db');
 
 // Log all requests for debugging
