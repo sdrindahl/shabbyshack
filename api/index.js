@@ -21,12 +21,7 @@ app.get('/', (req, res) => {
 });
 
 // --- SQLite setup ---
-// Ensure /data directory exists (for Railway persistent storage)
-const dataDir = '/data';
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir);
-}
-const db = new sqlite3.Database('/data/stories.db');
+const db = new sqlite3.Database('./stories.db');
 
 // Log all requests for debugging
 app.use((req, res, next) => {
