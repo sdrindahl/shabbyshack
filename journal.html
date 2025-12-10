@@ -14,13 +14,21 @@
             <div class="container mx-auto px-4">
                 <!-- Login Form -->
                 <div id="loginSection" class="mb-8">
-                                    <form id="loginForm" class="flex flex-col md:flex-row items-center gap-4 justify-center">
-                                        <input id="loginUsername" type="text" placeholder="Username" class="px-4 py-2 rounded bg-gray-800 text-gray-200" required />
-                                        <input id="loginPassword" type="password" placeholder="Password" class="px-4 py-2 rounded bg-gray-800 text-gray-200" required />
-                                        <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-6 rounded-lg">Login</button>
-                                        <span id="loginStatus" class="text-sm ml-2"></span>
-                                    </form>
-                                    <button id="logoutBtn" class="hidden mt-4 bg-gray-700 hover:bg-red-600 text-white font-semibold py-2 px-6 rounded-lg">Logout</button>
+                    <button id="openLoginModalBtn" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-6 rounded-lg mb-4">Login</button>
+                    <button id="logoutBtn" class="hidden mt-4 bg-gray-700 hover:bg-red-600 text-white font-semibold py-2 px-6 rounded-lg">Logout</button>
+                    <!-- Login Modal -->
+                    <div id="loginModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 hidden">
+                        <div class="bg-[#101014] rounded-lg shadow-xl p-8 w-full max-w-md relative">
+                            <button id="closeLoginModalBtn" class="absolute top-2 right-2 text-gray-400 hover:text-orange-500 text-2xl font-bold">&times;</button>
+                            <h3 class="text-2xl font-bold mb-4 text-orange-500 text-center">Login</h3>
+                            <form id="loginForm" class="flex flex-col gap-4">
+                                <input id="loginUsername" type="text" placeholder="Username" class="px-4 py-2 rounded bg-gray-800 text-gray-200" required />
+                                <input id="loginPassword" type="password" placeholder="Password" class="px-4 py-2 rounded bg-gray-800 text-gray-200" required />
+                                <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-6 rounded-lg">Login</button>
+                                <span id="loginStatus" class="text-sm ml-2"></span>
+                            </form>
+                        </div>
+                    </div>
                 </div>
                 <button id="openModalBtn" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-6 rounded-lg shadow transition duration-200 mb-8">
                     Share Your Story or Memory
@@ -80,6 +88,20 @@
         setAuthToken('');
         document.getElementById('loginStatus').textContent = 'Logged out.';
         document.getElementById('loginStatus').className = 'text-gray-400 text-sm ml-2';
+    });
+
+    // Login modal open/close handlers
+    document.getElementById('openLoginModalBtn').addEventListener('click', function() {
+        document.getElementById('loginModal').classList.remove('hidden');
+        setTimeout(() => { document.getElementById('loginUsername').focus(); }, 100);
+    });
+    document.getElementById('closeLoginModalBtn').addEventListener('click', function() {
+        document.getElementById('loginModal').classList.add('hidden');
+    });
+    document.getElementById('loginModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.add('hidden');
+        }
     });
 
     // Login form handler
@@ -190,10 +212,10 @@
     window.addEventListener('DOMContentLoaded', function() {
         if (authToken) {
             document.getElementById('logoutBtn').classList.remove('hidden');
-            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('openLoginModalBtn').classList.add('hidden');
         } else {
             document.getElementById('logoutBtn').classList.add('hidden');
-            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('openLoginModalBtn').classList.remove('hidden');
         }
     });
 
