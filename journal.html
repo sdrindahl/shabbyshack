@@ -76,7 +76,7 @@
         const status = document.getElementById('loginStatus');
         status.textContent = '';
         try {
-            const res = await fetch('https://shabbyshack.up.railway.app/auth/login', {
+            const res = await fetch('https://shabbyshack-production.up.railway.app/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
@@ -95,7 +95,7 @@
 
     // --- LOAD STORIES FROM API ON PAGE LOAD ---
     async function loadStoriesFromAPI() {
-        const apiUrl = 'https://shabbyshack.up.railway.app/stories';
+        const apiUrl = 'https://shabbyshack-production.up.railway.app/stories';
         const grid = document.getElementById('journalGrid');
         // Remove all existing story articles (but keep modals and emptyMessage)
         Array.from(grid.querySelectorAll('article')).forEach(a => a.remove());
@@ -195,7 +195,7 @@
         var imageData = '';
         var submitStory = async (imgData) => {
             try {
-                const res = await fetch('https://shabbyshack.up.railway.app/stories', {
+                const res = await fetch('https://shabbyshack-production.up.railway.app/stories', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -234,7 +234,7 @@
         var imageData = document.getElementById('editModal').dataset.imageData || '';
         var submitEdit = async (imgData) => {
             try {
-                const res = await fetch(`https://shabbyshack.up.railway.app/stories/${editingArticle.id}`, {
+                const res = await fetch(`https://shabbyshack-production.up.railway.app/stories/${editingArticle.id}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
