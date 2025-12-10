@@ -275,7 +275,7 @@
     // Add story tile on submit (POST to API with auth)
     document.getElementById('storyForm').addEventListener('submit', function(e) {
         e.preventDefault();
-        var name = document.getElementById('storyName').value.trim() || 'Anonymous';
+        var name = 'Anonymous';
         var text = document.getElementById('storyText').value.trim();
         var imageInput = document.getElementById('storyImage');
         if (!text) return;
