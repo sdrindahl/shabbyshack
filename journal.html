@@ -113,11 +113,12 @@
         if (token) {
             localStorage.setItem('jwtToken', token);
             document.getElementById('logoutBtn').classList.remove('hidden');
-            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('openLoginModalBtn').classList.add('hidden');
+            document.getElementById('loginModal').classList.add('hidden');
         } else {
             localStorage.removeItem('jwtToken');
             document.getElementById('logoutBtn').classList.add('hidden');
-            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('openLoginModalBtn').classList.remove('hidden');
         }
         loadStoriesFromAPI(); // Refresh UI on login/logout
     }
