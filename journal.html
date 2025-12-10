@@ -58,8 +58,218 @@
     </main>
     <!-- Place your navigation, meatball menu, and footer here (reuse your previous code) -->
     <script>
-    // ... JavaScript from previous working version goes here ...
-    // (For brevity, you can paste the full working script block from before)
+    // --- AUTH ---
+    let authToken = localStorage.getItem('jwtToken') || '';
+    let editingArticle = null;
+    function setAuthToken(token) {
+        authToken = token;
+        if (token) localStorage.setItem('jwtToken', token);
+        else localStorage.removeItem('jwtToken');
+        loadStoriesFromAPI(); // Refresh UI on login/logout
+    }
+
+    // Login form handler
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const username = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value.trim();
+        const status = document.getElementById('loginStatus');
+        status.textContent = '';
+        try {
+            const res = await fetch('https://shabbyshack.up.railway.app/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            if (!res.ok) throw new Error('Login failed');
+            const data = await res.json();
+            setAuthToken(data.token);
+            status.textContent = 'Logged in!';
+            status.className = 'text-green-400 text-sm ml-2';
+        } catch (err) {
+            status.textContent = 'Login failed';
+            status.className = 'text-red-400 text-sm ml-2';
+            setAuthToken('');
+        }
+    });
+
+    // --- LOAD STORIES FROM API ON PAGE LOAD ---
+    async function loadStoriesFromAPI() {
+        const apiUrl = 'https://shabbyshack.up.railway.app/stories';
+        const grid = document.getElementById('journalGrid');
+        // Remove all existing story articles (but keep modals and emptyMessage)
+        Array.from(grid.querySelectorAll('article')).forEach(a => a.remove());
+        let emptyMsg = document.getElementById('emptyMessage');
+        if (emptyMsg) emptyMsg.remove();
+        try {
+            const res = await fetch(apiUrl);
+            if (!res.ok) throw new Error('Failed to fetch stories');
+            const stories = await res.json();
+            if (!stories.length) {
+                const msg = document.createElement('div');
+                msg.id = 'emptyMessage';
+                msg.className = 'col-span-3 text-center text-gray-400 text-lg py-12';
+                msg.textContent = 'No stories yet—be the first to share!';
+                grid.appendChild(msg);
+                return;
+            }
+            stories.forEach(story => {
+                const article = document.createElement('article');
+                article.className = 'bg-gray-900 rounded-lg overflow-hidden shadow-2xl';
+                let imgTag = story.image ? `<img src='${story.image}' alt='User Story Image' class='w-full h-56 object-cover'>` : '';
+                let editDeleteBtns = '';
+                if (authToken) {
+                    editDeleteBtns = `
+                        <button class='edit-story-btn bg-orange-500 hover:bg-orange-600 text-white font-semibold py-1 px-4 rounded-lg mt-4 mr-2'>Edit</button>
+                        <button class='delete-story-btn bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-4 rounded-lg mt-4'>Delete</button>
+                    `;
+                }
+                article.innerHTML = `
+                    ${imgTag}
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2 text-white">${story.name || 'Anonymous'}'s Story</h3>
+                        <p class="text-sm text-gray-400 mb-4">${story.created_at ? new Date(story.created_at).toLocaleDateString() : ''} | Shared Memory</p>
+                        <p class="text-gray-300">${story.text}</p>
+                        ${editDeleteBtns}
+                    </div>
+                `;
+                // Edit handler
+                if (authToken) {
+                    article.querySelector('.edit-story-btn').addEventListener('click', function() {
+                        editingArticle = { id: story.id, article };
+                        document.getElementById('editStoryName').value = story.name;
+                        document.getElementById('editStoryText').value = story.text;
+                        document.getElementById('editStoryImage').value = '';
+                        document.getElementById('editModal').classList.remove('hidden');
+                        document.getElementById('editModal').dataset.imageData = story.image || '';
+                    });
+                    // Delete handler
+                    article.querySelector('.delete-story-btn').addEventListener('click', async function() {
+                        if (confirm('Are you sure you want to delete this story?')) {
+                            try {
+                                const res = await fetch(`https://shabbyshack.up.railway.app/stories/${story.id}`, {
+                                    method: 'DELETE',
+                                    headers: { 'Authorization': 'Bearer ' + authToken }
+                                });
+                                if (!res.ok) throw new Error('Failed to delete');
+                                loadStoriesFromAPI();
+                            } catch (err) {
+                                alert('Failed to delete story.');
+                            }
+                        }
+                    });
+                }
+                grid.appendChild(article);
+            });
+        } catch (err) {
+            const msg = document.createElement('div');
+            msg.id = 'emptyMessage';
+            msg.className = 'col-span-3 text-center text-red-400 text-lg py-12';
+            msg.textContent = 'Error loading stories.';
+            grid.appendChild(msg);
+            console.error(err);
+        }
+    }
+    // Load stories on page load
+    window.addEventListener('DOMContentLoaded', loadStoriesFromAPI);
+
+    document.getElementById('openModalBtn').addEventListener('click', function() {
+        document.getElementById('storyModal').classList.remove('hidden');
+    });
+    document.getElementById('closeModalBtn').addEventListener('click', function() {
+        document.getElementById('storyModal').classList.add('hidden');
+    });
+    document.getElementById('storyModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.add('hidden');
+        }
+    });
+
+    // Add story tile on submit (POST to API with auth)
+    document.getElementById('storyForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var name = document.getElementById('storyName').value.trim() || 'Anonymous';
+        var text = document.getElementById('storyText').value.trim();
+        var imageInput = document.getElementById('storyImage');
+        if (!text) return;
+        var imageData = '';
+        var submitStory = async (imgData) => {
+            try {
+                const res = await fetch('https://shabbyshack.up.railway.app/stories', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': authToken ? 'Bearer ' + authToken : ''
+                    },
+                    body: JSON.stringify({ name, text, image: imgData || '' })
+                });
+                if (!res.ok) throw new Error('Failed to post story');
+                // Reload stories from API
+                loadStoriesFromAPI();
+            } catch (err) {
+                alert('Failed to post story. Are you logged in?');
+            }
+        };
+        if (imageInput && imageInput.files && imageInput.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(evt) {
+                imageData = evt.target.result;
+                submitStory(imageData);
+            };
+            reader.readAsDataURL(imageInput.files[0]);
+        } else {
+            submitStory('');
+        }
+        document.getElementById('storyModal').classList.add('hidden');
+        document.getElementById('storyForm').reset();
+    });
+
+    // Edit story (PUT to API with auth)
+    document.getElementById('editStoryForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (!editingArticle) return;
+        var name = document.getElementById('editStoryName').value.trim() || 'Anonymous';
+        var text = document.getElementById('editStoryText').value.trim();
+        var imageInput = document.getElementById('editStoryImage');
+        var imageData = document.getElementById('editModal').dataset.imageData || '';
+        var submitEdit = async (imgData) => {
+            try {
+                const res = await fetch(`https://shabbyshack.up.railway.app/stories/${editingArticle.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + authToken
+                    },
+                    body: JSON.stringify({ name, text, image: imgData || '' })
+                });
+                if (!res.ok) throw new Error('Failed to update');
+                loadStoriesFromAPI();
+            } catch (err) {
+                alert('Failed to update story.');
+            }
+        };
+        if (imageInput && imageInput.files && imageInput.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(evt) {
+                imageData = evt.target.result;
+                submitEdit(imageData);
+            };
+            reader.readAsDataURL(imageInput.files[0]);
+        } else {
+            submitEdit(imageData);
+        }
+        document.getElementById('editModal').classList.add('hidden');
+        document.getElementById('editStoryForm').reset();
+    });
+
+    document.getElementById('closeEditModalBtn').addEventListener('click', function() {
+        document.getElementById('editModal').classList.add('hidden');
+    });
+    document.getElementById('editModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.add('hidden');
+        }
+    });
     </script>
 </body>
 </html>
