@@ -4,147 +4,228 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Journal - Hunting Chronicle's</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        html{scroll-behavior:smooth}
-        @media (max-width: 1023px) {
-            #desktopNav { display: none !important; }
+        <script>
+        // --- AUTH ---
+        let authToken = localStorage.getItem('jwtToken') || '';
+        function setAuthToken(token) {
+            authToken = token;
+            if (token) localStorage.setItem('jwtToken', token);
+            else localStorage.removeItem('jwtToken');
+            loadStoriesFromAPI(); // Refresh UI on login/logout
         }
-    </style>
-</head>
-<body class="bg-gray-900 text-gray-300 font-sans">
 
-    <!-- Desktop top nav -->
-    <header class="hidden lg:block fixed top-0 left-0 right-0 z-10 bg-gray-900/90 shadow-lg backdrop-blur-sm">
-        <h2 class="text-4xl font-bold text-center mb-12 text-orange-500">Latest Journal Entries & Tips</h2>
-        
-            <div class="flex items-center justify-center space-x-6">
-                <a href="index.html" class="hover:text-orange-500 transition duration-300">Home</a>
-                <a href="journal.html" class="hover:text-orange-500 transition duration-300">Journal</a>
-                <a href="gallery.html" class="hover:text-orange-500 transition duration-300">Trophy Room</a>
-                <a href="videos.html" class="hover:text-orange-500 transition duration-300">Videos</a>
-                <a href="contact.html" class="hover:text-orange-500 transition duration-300">Uploads</a>
-            </div>
-        </nav>
-    </header>
-
-    <!-- Mobile bottom nav -->
-    <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-gray-900/95 border-t border-gray-800 backdrop-blur-sm" style="z-index: 9999; padding-bottom: env(safe-area-inset-bottom);">
-        <div class="flex justify-around items-center py-2">
-            <a href="index.html" class="flex flex-col items-center py-2 px-3 text-gray-400 hover:text-orange-500">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                <span class="text-xs mt-1">Home</span>
-            </a>
-            <a href="journal.html" class="flex flex-col items-center py-2 px-3 text-orange-500">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                <span class="text-xs mt-1">Journal</span>
-            </a>
-            <a href="gallery.html" class="flex flex-col items-center py-2 px-3 text-gray-400 hover:text-orange-500">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                <span class="text-xs mt-1">Trophy</span>
-            </a>
-            <a href="videos.html" class="flex flex-col items-center py-2 px-3 text-gray-400 hover:text-orange-500">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <span class="text-xs mt-1">Videos</span>
-            </a>
-            <a href="contact.html" class="flex flex-col items-center py-2 px-3 text-gray-400 hover:text-orange-500">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                <span class="text-xs mt-1">Upload</span>
-            </a>
-        </div>
-    </nav>
-
-    <main class="lg:pt-24 pb-20 lg:pb-0">
-        <section id="journal" class="py-16 bg-gray-800 min-h-screen">
-            <div class="container mx-auto px-4">
-                    <button id="openModalBtn" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-6 rounded-lg shadow transition duration-200 mb-8">
-                        Share Your Story or Memory
-                    </button>
-                    <div class="grid md:grid-cols-3 gap-8" id="journalGrid">
-                                            <!-- Edit Modal -->
-                                            <div id="editModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 hidden">
-                                                <div class="bg-gray-900 rounded-lg shadow-xl p-8 w-full max-w-md relative">
-                                                    <button id="closeEditModalBtn" class="absolute top-2 right-2 text-gray-400 hover:text-orange-500 text-2xl font-bold">&times;</button>
-                                                    <h3 class="text-2xl font-bold mb-4 text-orange-500 text-center">Edit Your Story or Memory</h3>
-                                                    <form id="editStoryForm">
-                                                        <input id="editStoryName" type="text" placeholder="Your Name" class="w-full mb-3 px-4 py-2 rounded bg-gray-800 text-gray-200" />
-                                                        <textarea id="editStoryText" placeholder="Your Story or Memory" class="w-full mb-3 px-4 py-2 rounded bg-gray-800 text-gray-200" rows="5"></textarea>
-                                                        <input id="editStoryImage" type="file" accept="image/*" class="w-full mb-3 px-4 py-2 rounded bg-gray-800 text-gray-200" />
-                                                        <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-6 rounded-lg w-full">Save Changes</button>
-                                                    </form>
-                                                </div>
-                                            </div>
-                        <div id="emptyMessage" class="col-span-3 text-center text-gray-400 text-lg py-12">No stories yet—be the first to share!</div>
-                    </div>
-
-                    <!-- Modal -->
-                    <div id="storyModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 hidden">
-                        <div class="bg-gray-900 rounded-lg shadow-xl p-8 w-full max-w-md relative">
-                            <button id="closeModalBtn" class="absolute top-2 right-2 text-gray-400 hover:text-orange-500 text-2xl font-bold">&times;</button>
-                            <h3 class="text-2xl font-bold mb-4 text-orange-500 text-center">Share Your Story or Memory</h3>
-                            <form id="storyForm">
-                                <input id="storyName" type="text" placeholder="Your Name" class="w-full mb-3 px-4 py-2 rounded bg-gray-800 text-gray-200" />
-                                <textarea id="storyText" placeholder="Your Story or Memory" class="w-full mb-3 px-4 py-2 rounded bg-gray-800 text-gray-200" rows="5"></textarea>
-                                <input id="storyImage" type="file" accept="image/*" class="w-full mb-3 px-4 py-2 rounded bg-gray-800 text-gray-200" />
-                                <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-6 rounded-lg w-full">Submit</button>
-                            </form>
-                        </div>
-                        <!-- Removed stray article tiles from inside the modal -->
-                </div>
-            </div>
-        </section>
-    </main>
-    <script>
-
-    // Modal script
-    let editingArticle = null;
-    // Add edit button handler to a story tile (must be defined before any use)
-    function addEditHandler(article, name, text, imageData) {
-        article.querySelector('.edit-story-btn').addEventListener('click', function() {
-            editingArticle = article;
-            document.getElementById('editStoryName').value = name;
-            document.getElementById('editStoryText').value = text;
-            document.getElementById('editStoryImage').value = '';
-            document.getElementById('editModal').classList.remove('hidden');
-            // Store imageData for later
-            document.getElementById('editModal').dataset.imageData = imageData || '';
-        });
-    }
-
-    // --- LOAD STORIES FROM API ON PAGE LOAD ---
-    async function loadStoriesFromAPI() {
-        const apiUrl = 'https://shabbyshack.up.railway.app/stories';
-        const grid = document.getElementById('journalGrid') || document.querySelector('.grid.md\:grid-cols-3') || document.querySelector('.grid');
-        // Remove all existing story articles (but keep modals and emptyMessage)
-        Array.from(grid.querySelectorAll('article')).forEach(a => a.remove());
-        let emptyMsg = document.getElementById('emptyMessage');
-        if (emptyMsg) emptyMsg.remove();
-        try {
-            const res = await fetch(apiUrl);
-            if (!res.ok) throw new Error('Failed to fetch stories');
-            const stories = await res.json();
-            if (!stories.length) {
-                const msg = document.createElement('div');
-                msg.id = 'emptyMessage';
-                msg.className = 'col-span-3 text-center text-gray-400 text-lg py-12';
-                msg.textContent = 'No stories yet—be the first to share!';
-                grid.appendChild(msg);
-                return;
+        // Login form handler
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            const status = document.getElementById('loginStatus');
+            status.textContent = '';
+            try {
+                const res = await fetch('https://shabbyshack.up.railway.app/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                if (!res.ok) throw new Error('Login failed');
+                const data = await res.json();
+                setAuthToken(data.token);
+                status.textContent = 'Logged in!';
+                status.className = 'text-green-400 text-sm ml-2';
+            } catch (err) {
+                status.textContent = 'Login failed';
+                status.className = 'text-red-400 text-sm ml-2';
+                setAuthToken('');
             }
-            stories.forEach(story => {
-                const article = document.createElement('article');
-                article.className = 'bg-gray-900 rounded-lg overflow-hidden shadow-2xl';
-                let imgTag = story.imageData ? `<img src='${story.imageData}' alt='User Story Image' class='w-full h-56 object-cover'>` : '';
-                article.innerHTML = `
+        });
+
+        // --- LOAD STORIES FROM API ON PAGE LOAD ---
+        async function loadStoriesFromAPI() {
+                const apiUrl = 'https://shabbyshack.up.railway.app/stories';
+                const grid = document.getElementById('journalGrid') || document.querySelector('.grid.md\:grid-cols-3') || document.querySelector('.grid');
+                // Remove all existing story articles (but keep modals and emptyMessage)
+                Array.from(grid.querySelectorAll('article')).forEach(a => a.remove());
+                let emptyMsg = document.getElementById('emptyMessage');
+                if (emptyMsg) emptyMsg.remove();
+                try {
+                        const res = await fetch(apiUrl);
+                        if (!res.ok) throw new Error('Failed to fetch stories');
+                        const stories = await res.json();
+                        if (!stories.length) {
+                                const msg = document.createElement('div');
+                                msg.id = 'emptyMessage';
+                                msg.className = 'col-span-3 text-center text-gray-400 text-lg py-12';
+                                msg.textContent = 'No stories yet—be the first to share!';
+                                grid.appendChild(msg);
+                                return;
+                        }
+                        stories.forEach(story => {
+                                const article = document.createElement('article');
+                                article.className = 'bg-gray-900 rounded-lg overflow-hidden shadow-2xl';
+                                let imgTag = story.image ? `<img src='${story.image}' alt='User Story Image' class='w-full h-56 object-cover'>` : '';
+                                let editDeleteBtns = '';
+                                if (authToken) {
+                                    editDeleteBtns = `
+                                        <button class='edit-story-btn bg-orange-500 hover:bg-orange-600 text-white font-semibold py-1 px-4 rounded-lg mt-4 mr-2'>Edit</button>
+                                        <button class='delete-story-btn bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-4 rounded-lg mt-4'>Delete</button>
+                                    `;
+                                }
+                                article.innerHTML = `
+                                        ${imgTag}
+                                        <div class="p-6">
+                                                <h3 class="text-xl font-semibold mb-2 text-white">${story.name || 'Anonymous'}'s Story</h3>
+                                                <p class="text-sm text-gray-400 mb-4">${story.created_at ? new Date(story.created_at).toLocaleDateString() : ''} | Shared Memory</p>
+                                                <p class="text-gray-300">${story.text}</p>
+                                                ${editDeleteBtns}
+                                        </div>
+                                `;
+                                // Edit handler
+                                if (authToken) {
+                                    article.querySelector('.edit-story-btn').addEventListener('click', function() {
+                                        editingArticle = { id: story.id, article };
+                                        document.getElementById('editStoryName').value = story.name;
+                                        document.getElementById('editStoryText').value = story.text;
+                                        document.getElementById('editStoryImage').value = '';
+                                        document.getElementById('editModal').classList.remove('hidden');
+                                        document.getElementById('editModal').dataset.imageData = story.image || '';
+                                    });
+                                    // Delete handler
+                                    article.querySelector('.delete-story-btn').addEventListener('click', async function() {
+                                        if (confirm('Are you sure you want to delete this story?')) {
+                                            try {
+                                                const res = await fetch(`https://shabbyshack.up.railway.app/stories/${story.id}`, {
+                                                    method: 'DELETE',
+                                                    headers: { 'Authorization': 'Bearer ' + authToken }
+                                                });
+                                                if (!res.ok) throw new Error('Failed to delete');
+                                                loadStoriesFromAPI();
+                                            } catch (err) {
+                                                alert('Failed to delete story.');
+                                            }
+                                        }
+                                    });
+                                }
+                                grid.appendChild(article);
+                        });
+                } catch (err) {
+                        const msg = document.createElement('div');
+                        msg.id = 'emptyMessage';
+                        msg.className = 'col-span-3 text-center text-red-400 text-lg py-12';
+                        msg.textContent = 'Error loading stories.';
+                        grid.appendChild(msg);
+                        console.error(err);
+                }
+        }
+        // Load stories on page load
+        window.addEventListener('DOMContentLoaded', loadStoriesFromAPI);
+
+        document.getElementById('openModalBtn').addEventListener('click', function() {
+                document.getElementById('storyModal').classList.remove('hidden');
+        });
+        document.getElementById('closeModalBtn').addEventListener('click', function() {
+                document.getElementById('storyModal').classList.add('hidden');
+        });
+        document.getElementById('storyModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                        this.classList.add('hidden');
+                }
+        });
+
+        // Add story tile on submit (POST to API with auth)
+        document.getElementById('storyForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                var name = document.getElementById('storyName').value.trim() || 'Anonymous';
+                var text = document.getElementById('storyText').value.trim();
+                var imageInput = document.getElementById('storyImage');
+                if (!text) return;
+                var imageData = '';
+                var submitStory = async (imgData) => {
+                    try {
+                        const res = await fetch('https://shabbyshack.up.railway.app/stories', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': authToken ? 'Bearer ' + authToken : ''
+                            },
+                            body: JSON.stringify({ name, text, image: imgData || '' })
+                        });
+                        if (!res.ok) throw new Error('Failed to post story');
+                        // Reload stories from API
+                        loadStoriesFromAPI();
+                    } catch (err) {
+                        alert('Failed to post story. Are you logged in?');
+                    }
+                };
+                if (imageInput && imageInput.files && imageInput.files[0]) {
+                    var reader = new FileReader();
+                    reader.onload = function(evt) {
+                        imageData = evt.target.result;
+                        submitStory(imageData);
+                    };
+                    reader.readAsDataURL(imageInput.files[0]);
+                } else {
+                    submitStory('');
+                }
+                document.getElementById('storyModal').classList.add('hidden');
+                document.getElementById('storyForm').reset();
+        });
+
+        // Edit story (PUT to API with auth)
+        document.getElementById('editStoryForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                if (!editingArticle) return;
+                var name = document.getElementById('editStoryName').value.trim() || 'Anonymous';
+                var text = document.getElementById('editStoryText').value.trim();
+                var imageInput = document.getElementById('editStoryImage');
+                var imageData = document.getElementById('editModal').dataset.imageData || '';
+                var submitEdit = async (imgData) => {
+                    try {
+                        const res = await fetch(`https://shabbyshack.up.railway.app/stories/${editingArticle.id}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer ' + authToken
+                            },
+                            body: JSON.stringify({ name, text, image: imgData || '' })
+                        });
+                        if (!res.ok) throw new Error('Failed to update');
+                        loadStoriesFromAPI();
+                    } catch (err) {
+                        alert('Failed to update story.');
+                    }
+                };
+                if (imageInput && imageInput.files && imageInput.files[0]) {
+                    var reader = new FileReader();
+                    reader.onload = function(evt) {
+                        imageData = evt.target.result;
+                        submitEdit(imageData);
+                    };
+                    reader.readAsDataURL(imageInput.files[0]);
+                } else {
+                    submitEdit(imageData);
+                }
+                document.getElementById('editModal').classList.add('hidden');
+                document.getElementById('editStoryForm').reset();
+        });
+
+        document.getElementById('closeEditModalBtn').addEventListener('click', function() {
+                document.getElementById('editModal').classList.add('hidden');
+        });
+        document.getElementById('editModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                        this.classList.add('hidden');
+                }
+        });
+        </script>
                     ${imgTag}
                     <div class="p-6">
                         <h3 class="text-xl font-semibold mb-2 text-white">${story.name || 'Anonymous'}'s Story</h3>
-                        <p class="text-sm text-gray-400 mb-4">${story.date ? new Date(story.date).toLocaleDateString() : ''} | Shared Memory</p>
+                        <p class="text-sm text-gray-400 mb-4">${story.created_at ? new Date(story.created_at).toLocaleDateString() : ''} | Shared Memory</p>
                         <p class="text-gray-300">${story.text}</p>
                         <button class='edit-story-btn bg-orange-500 hover:bg-orange-600 text-white font-semibold py-1 px-4 rounded-lg mt-4'>Edit</button>
                     </div>
                 `;
-                addEditHandler(article, story.name, story.text, story.imageData);
+                addEditHandler(article, story.name, story.text, story.image);
                 grid.appendChild(article);
             });
         } catch (err) {
@@ -172,51 +253,44 @@
         }
     });
 
-    // Add story tile on submit
-    document.getElementById('storyForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        var name = document.getElementById('storyName').value.trim() || 'Anonymous';
-        var text = document.getElementById('storyText').value.trim();
-        var imageInput = document.getElementById('storyImage');
-        if (!text) return;
-        // Use a robust selector for the grid
-        var grid = document.getElementById('journalGrid') || document.querySelector('.grid.md\:grid-cols-3') || document.querySelector('.grid');
-        var emptyMsg = document.getElementById('emptyMessage');
-        if (emptyMsg) emptyMsg.remove();
-        var article = document.createElement('article');
-        article.className = 'bg-gray-900 rounded-lg overflow-hidden shadow-2xl';
-        var imageHTML = '';
-        var imageData = '';
-        function setArticleContent(imgData) {
-            var imgTag = imgData ? `<img src='${imgData}' alt='User Story Image' class='w-full h-56 object-cover'>` : '';
-            article.innerHTML = `
-                ${imgTag}
-                <div class="p-6">
-                    <h3 class="text-xl font-semibold mb-2 text-white">${name}'s Story</h3>
-                    <p class="text-sm text-gray-400 mb-4">${new Date().toLocaleDateString()} | Shared Memory</p>
-                    <p class="text-gray-300">${text}</p>
-                    <button class='edit-story-btn bg-orange-500 hover:bg-orange-600 text-white font-semibold py-1 px-4 rounded-lg mt-4'>Edit</button>
-                </div>
-            `;
-            addEditHandler(article, name, text, imgData);
-        }
-        if (imageInput && imageInput.files && imageInput.files[0]) {
-            var reader = new FileReader();
-            reader.onload = function(evt) {
-                imageData = evt.target.result;
-                setArticleContent(imageData);
-                console.log('Prepending article with image', article, grid);
-                grid.prepend(article);
-            };
-            reader.readAsDataURL(imageInput.files[0]);
-        } else {
-            setArticleContent('');
-            console.log('Prepending article without image', article, grid);
-            grid.prepend(article);
-        }
-        document.getElementById('storyModal').classList.add('hidden');
-        document.getElementById('storyForm').reset();
-    });
+        // Add story tile on submit (POST to API with auth)
+        document.getElementById('storyForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                var name = document.getElementById('storyName').value.trim() || 'Anonymous';
+                var text = document.getElementById('storyText').value.trim();
+                var imageInput = document.getElementById('storyImage');
+                if (!text) return;
+                var imageData = '';
+                var submitStory = async (imgData) => {
+                    try {
+                        const res = await fetch('https://shabbyshack.up.railway.app/stories', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': authToken ? 'Bearer ' + authToken : ''
+                            },
+                            body: JSON.stringify({ name, text, image: imgData || '' })
+                        });
+                        if (!res.ok) throw new Error('Failed to post story');
+                        // Reload stories from API
+                        loadStoriesFromAPI();
+                    } catch (err) {
+                        alert('Failed to post story. Are you logged in?');
+                    }
+                };
+                if (imageInput && imageInput.files && imageInput.files[0]) {
+                    var reader = new FileReader();
+                    reader.onload = function(evt) {
+                        imageData = evt.target.result;
+                        submitStory(imageData);
+                    };
+                    reader.readAsDataURL(imageInput.files[0]);
+                } else {
+                    submitStory('');
+                }
+                document.getElementById('storyModal').classList.add('hidden');
+                document.getElementById('storyForm').reset();
+        });
 
     document.getElementById('closeEditModalBtn').addEventListener('click', function() {
         document.getElementById('editModal').classList.add('hidden');
