@@ -69,7 +69,7 @@
                     </div>
                 </div>
                 <button id="openModalBtn" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-6 rounded-lg shadow transition duration-200 mb-8">
-                    Share Your Story or Memory
+                    Add
                 </button>
                 <div class="grid md:grid-cols-3 gap-8" id="journalGrid">
                     <div id="emptyMessage" class="col-span-3 text-center text-gray-400 text-lg py-12">No stories yet—be the first to share!</div>
@@ -91,11 +91,13 @@
                 <div id="storyModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 hidden">
                     <div class="bg-[#101014] rounded-lg shadow-xl p-8 w-full max-w-md relative">
                         <button id="closeModalBtn" class="absolute top-2 right-2 text-gray-400 hover:text-orange-500 text-2xl font-bold">&times;</button>
-                        <h3 class="text-2xl font-bold mb-4 text-orange-500 text-center">Share Your Story or Memory</h3>
+                        <h3 class="text-2xl font-bold mb-4 text-orange-500 text-center">Add</h3>
                         <form id="storyForm">
-                            <input id="storyName" type="text" placeholder="Your Name" class="w-full mb-3 px-4 py-2 rounded bg-gray-800 text-gray-200" />
-                            <textarea id="storyText" placeholder="Your Story or Memory" class="w-full mb-3 px-4 py-2 rounded bg-gray-800 text-gray-200" rows="5"></textarea>
-                            <input id="storyImage" type="file" accept="image/*" class="w-full mb-3 px-4 py-2 rounded bg-gray-800 text-gray-200" />
+                            <textarea id="storyText" placeholder="Notes" class="w-full mb-3 px-4 py-2 rounded bg-gray-800 text-gray-200" rows="5"></textarea>
+                            <label class="block mb-3">
+                                <span class="block text-gray-400 mb-1">Add a photo</span>
+                                <input id="storyImage" type="file" accept="image/*" class="w-full px-4 py-2 rounded bg-gray-800 text-gray-200" />
+                            </label>
                             <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-6 rounded-lg w-full">Submit</button>
                         </form>
                     </div>
