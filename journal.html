@@ -14,12 +14,13 @@
             <div class="container mx-auto px-4">
                 <!-- Login Form -->
                 <div id="loginSection" class="mb-8">
-                  <form id="loginForm" class="flex flex-col md:flex-row items-center gap-4 justify-center">
-                    <input id="loginUsername" type="text" placeholder="Username" class="px-4 py-2 rounded bg-gray-800 text-gray-200" required />
-                    <input id="loginPassword" type="password" placeholder="Password" class="px-4 py-2 rounded bg-gray-800 text-gray-200" required />
-                    <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-6 rounded-lg">Login</button>
-                    <span id="loginStatus" class="text-sm ml-2"></span>
-                  </form>
+                                    <form id="loginForm" class="flex flex-col md:flex-row items-center gap-4 justify-center">
+                                        <input id="loginUsername" type="text" placeholder="Username" class="px-4 py-2 rounded bg-gray-800 text-gray-200" required />
+                                        <input id="loginPassword" type="password" placeholder="Password" class="px-4 py-2 rounded bg-gray-800 text-gray-200" required />
+                                        <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-6 rounded-lg">Login</button>
+                                        <span id="loginStatus" class="text-sm ml-2"></span>
+                                    </form>
+                                    <button id="logoutBtn" class="hidden mt-4 bg-gray-700 hover:bg-red-600 text-white font-semibold py-2 px-6 rounded-lg">Logout</button>
                 </div>
                 <button id="openModalBtn" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-6 rounded-lg shadow transition duration-200 mb-8">
                     Share Your Story or Memory
@@ -63,10 +64,23 @@
     let editingArticle = null;
     function setAuthToken(token) {
         authToken = token;
-        if (token) localStorage.setItem('jwtToken', token);
-        else localStorage.removeItem('jwtToken');
+        if (token) {
+            localStorage.setItem('jwtToken', token);
+            document.getElementById('logoutBtn').classList.remove('hidden');
+            document.getElementById('loginForm').classList.add('hidden');
+        } else {
+            localStorage.removeItem('jwtToken');
+            document.getElementById('logoutBtn').classList.add('hidden');
+            document.getElementById('loginForm').classList.remove('hidden');
+        }
         loadStoriesFromAPI(); // Refresh UI on login/logout
     }
+    // Logout button handler
+    document.getElementById('logoutBtn').addEventListener('click', function() {
+        setAuthToken('');
+        document.getElementById('loginStatus').textContent = 'Logged out.';
+        document.getElementById('loginStatus').className = 'text-gray-400 text-sm ml-2';
+    });
 
     // Login form handler
     document.getElementById('loginForm').addEventListener('submit', async function(e) {
@@ -172,6 +186,16 @@
     }
     // Load stories on page load
     window.addEventListener('DOMContentLoaded', loadStoriesFromAPI);
+    // Show/hide login/logout on page load
+    window.addEventListener('DOMContentLoaded', function() {
+        if (authToken) {
+            document.getElementById('logoutBtn').classList.remove('hidden');
+            document.getElementById('loginForm').classList.add('hidden');
+        } else {
+            document.getElementById('logoutBtn').classList.add('hidden');
+            document.getElementById('loginForm').classList.remove('hidden');
+        }
+    });
 
     document.getElementById('openModalBtn').addEventListener('click', function() {
         document.getElementById('storyModal').classList.remove('hidden');
