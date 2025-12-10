@@ -206,11 +206,10 @@
                 }
                 article.innerHTML = `
                     ${imgTag}
-                    <div class="p-6">
-                        <h3 class="text-xl font-bold mb-2 text-green-400 tracking-wide">${story.name || 'Anonymous'}'s Story</h3>
-                        <p class="text-sm text-orange-400 mb-4">${story.created_at ? new Date(story.created_at).toLocaleDateString() : ''} | Shared Memory</p>
-                        <p class="text-gray-200 italic">${story.text}</p>
-                        <div class="mt-4 flex gap-2">${editDeleteBtns}</div>
+                    <div class="p-4">
+                        <p class="text-xs text-orange-400 mb-2">${story.created_at ? new Date(story.created_at).toLocaleDateString() : ''} | Shared Memory</p>
+                        <p class="text-gray-200 italic text-sm line-clamp-3">${story.text}</p>
+                        <div class="mt-2 flex gap-2">${editDeleteBtns}</div>
                     </div>
                 `;
                 // Edit handler
@@ -240,6 +239,30 @@
                     });
                 }
                 grid.appendChild(article);
+                            // Make card clickable to view full story
+                            article.style.cursor = 'pointer';
+                            article.addEventListener('click', function(e) {
+                                // Prevent modal on edit/delete button click
+                                if (e.target.classList.contains('edit-story-btn') || e.target.classList.contains('delete-story-btn')) return;
+                                // Create and show modal with full image and note
+                                let modal = document.createElement('div');
+                                modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80';
+                                modal.innerHTML = `
+                                    <div class="bg-[#232326] border border-green-900 rounded-xl shadow-2xl p-6 w-full max-w-lg relative">
+                                        <button class="absolute top-2 right-2 text-gray-400 hover:text-orange-500 text-2xl font-bold" id="closeStoryViewBtn">&times;</button>
+                                        ${story.image ? `<img src='${story.image}' alt='User Story Image' class='w-full max-h-96 object-contain rounded mb-4'>` : ''}
+                                        <p class="text-xs text-orange-400 mb-2">${story.created_at ? new Date(story.created_at).toLocaleDateString() : ''} | Shared Memory</p>
+                                        <p class="text-gray-200 italic text-base">${story.text}</p>
+                                    </div>
+                                `;
+                                document.body.appendChild(modal);
+                                document.getElementById('closeStoryViewBtn').addEventListener('click', function() {
+                                    modal.remove();
+                                });
+                                modal.addEventListener('click', function(ev) {
+                                    if (ev.target === modal) modal.remove();
+                                });
+                            });
             });
         } catch (err) {
             const msg = document.createElement('div');
