@@ -17,25 +17,35 @@
 </head>
 <body class="bg-[#101014] text-gray-300 font-sans">
 
-        <!-- Desktop top nav -->
-        <header class="hidden lg:block fixed top-0 left-0 right-0 z-10 bg-[#101014]/90 shadow-lg backdrop-blur-sm">
-                <nav class="container mx-auto px-4 py-3">
-                        <div class="flex items-center justify-center space-x-6">
-                                <a href="index.html" class="hover:text-orange-500 transition duration-300">Home</a>
-                                <a href="trophy_room.html" class="hover:text-orange-500 transition duration-300">Trophy Room</a>
-                                <a href="plus.html" class="hover:text-orange-500 transition duration-300" aria-label="Uploads">
-                                        <span style="display:inline-flex;align-items:center;justify-content:center;width:2.25rem;height:2.25rem;background:#ed7b2f;border-radius:50%;">
-                                                <svg class="w-5 h-5" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24">
-                                                        <line x1="12" y1="6" x2="12" y2="18" stroke-linecap="round"/>
-                                                        <line x1="6" y1="12" x2="18" y2="12" stroke-linecap="round"/>
-                                                </svg>
-                                        </span>
-                                </a>
-                                <a href="videos.html" class="hover:text-orange-500 transition duration-300">Videos</a>
-                                <a href="gallery.html" class="hover:text-orange-500 transition duration-300">Gallery</a>
-                        </div>
-                </nav>
+        <!-- Modern top nav: logo left, nav right -->
+        <header class="hidden lg:block w-full fixed top-0 left-0 right-0 z-20 bg-[#18181b] shadow-lg">
+            <nav class="container mx-auto flex items-center justify-between px-8 py-3">
+                <div class="flex items-center space-x-3">
+                    <a href="index.html" class="text-2xl font-bold text-orange-500 tracking-tight">Hunting Chronicle's</a>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <a href="index.html" class="hover:text-orange-500 transition">Home</a>
+                    <a href="gallery.html" class="hover:text-orange-500 transition">Gallery</a>
+                    <a href="trophy_room.html" class="hover:text-orange-500 transition">Trophy Room</a>
+                    <a href="videos.html" class="hover:text-orange-500 transition">Videos</a>
+                    <a href="plus.html" class="ml-2 flex items-center justify-center" aria-label="Uploads">
+                        <span style="display:inline-flex;align-items:center;justify-content:center;width:2.5rem;height:2.5rem;background:#ed7b2f;border-radius:50%;">
+                            <svg class="w-6 h-6" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24">
+                                <line x1="12" y1="6" x2="12" y2="18" stroke-linecap="round"/>
+                                <line x1="6" y1="12" x2="18" y2="12" stroke-linecap="round"/>
+                            </svg>
+                        </span>
+                        <span class="ml-2 text-orange-500 font-semibold">Upload</span>
+                    </a>
+                </div>
+            </nav>
         </header>
+
+        <style>
+            @media (min-width: 1024px) {
+                main { padding-top: 4.5rem !important; }
+            }
+        </style>
 
     <!-- Mobile bottom nav -->
     <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-[#101014]/95 border-t border-[#18181b] backdrop-blur-sm" style="z-index: 9999; padding-bottom: env(safe-area-inset-bottom);">

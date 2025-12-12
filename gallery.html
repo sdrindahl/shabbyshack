@@ -8,51 +8,35 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-black text-gray-200 font-sans" style="background: repeating-linear-gradient(135deg, #18181b 0px, #232326 40px, #18181b 80px), url('https://www.transparenttextures.com/patterns/wood-pattern.png'); background-blend-mode: multiply;">
-        <!-- Desktop top nav -->
-        <header class="hidden lg:block fixed top-0 left-0 right-0 z-10 bg-[#101014]/90 shadow-lg backdrop-blur-sm">
-        <nav class="container mx-auto px-4 py-3">
-            <div class="flex items-center justify-center space-x-6">
-                <a href="index.html" class="hover:text-orange-500 transition duration-300">Home</a>
-                <a href="trophy_room.html" class="hover:text-orange-500 transition duration-300">Trophy Room</a>
-                <a href="plus.html" class="hover:text-orange-500 transition duration-300" aria-label="Uploads">
-                    <span style="display:inline-flex;align-items:center;justify-content:center;width:2.25rem;height:2.25rem;background:#ed7b2f;border-radius:50%;">
-                        <svg class="w-5 h-5" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24">
-                            <line x1="12" y1="6" x2="12" y2="18" stroke-linecap="round"/>
-                            <line x1="6" y1="12" x2="18" y2="12" stroke-linecap="round"/>
+        <!-- Modern top nav: logo left, nav right -->
+        <header class="hidden lg:block w-full fixed top-0 left-0 right-0 z-20 bg-[#18181b] shadow-lg">
+            <nav class="container mx-auto flex items-center justify-between px-8 py-3">
+                <div class="flex items-center space-x-3">
+                    <a href="index.html" class="text-2xl font-bold text-orange-500 tracking-tight">Hunting Chronicle's</a>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <a href="index.html" class="hover:text-orange-500 transition">Home</a>
+                    <a href="gallery.html" class="hover:text-orange-500 transition">Gallery</a>
+                    <a href="trophy_room.html" class="hover:text-orange-500 transition">Trophy Room</a>
+                    <a href="videos.html" class="hover:text-orange-500 transition">Videos</a>
+                    <a href="plus.html" class="ml-2 flex items-center justify-center" aria-label="Uploads">
+                        <span style="display:inline-flex;align-items:center;justify-content:center;width:2.5rem;height:2.5rem;background:#ed7b2f;border-radius:50%;">
+                            <svg class="w-6 h-6" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24">
+                                <line x1="12" y1="6" x2="12" y2="18" stroke-linecap="round"/>
+                                <line x1="6" y1="12" x2="18" y2="12" stroke-linecap="round"/>
+                            </svg>
+                        </span>
+                        <span class="ml-2 text-orange-500 font-semibold">Upload</span>
+                    </a>
+                </div>
+            </nav>
+        </header>
 
-                <!-- Desktop top nav -->
-                <header class="hidden lg:block fixed top-0 left-0 right-0 z-10 bg-[#101014]/90 shadow-lg backdrop-blur-sm">
-                <nav class="container mx-auto px-4 py-3">
-                        <div class="flex items-center justify-center space-x-6">
-                                <a href="index.html" class="hover:text-orange-500 transition duration-300">Home</a>
-                                <a href="trophy_room.html" class="hover:text-orange-500 transition duration-300">Trophy Room</a>
-                                <a href="plus.html" class="hover:text-orange-500 transition duration-300" aria-label="Uploads">
-                                        <span style="display:inline-flex;align-items:center;justify-content:center;width:2.25rem;height:2.25rem;background:#ed7b2f;border-radius:50%;">
-                                                <svg class="w-5 h-5" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24">
-                                                        <line x1="12" y1="6" x2="12" y2="18" stroke-linecap="round"/>
-                                                        <line x1="6" y1="12" x2="18" y2="12" stroke-linecap="round"/>
-                                                </svg>
-                                        </span>
-                                </a>
-                                <a href="videos.html" class="hover:text-orange-500 transition duration-300">Videos</a>
-                                <a href="gallery.html" class="hover:text-orange-500 transition duration-300">Gallery</a>
-                        </div>
-                </nav>
-                </header>
-            <a href="trophy_room.html" class="flex flex-col items-center py-2 px-3 text-gray-400 hover:text-orange-500">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                <span class="text-xs mt-1">Trophy</span>
-            </a>
-            <a href="videos.html" class="flex flex-col items-center py-2 px-3 text-gray-400 hover:text-orange-500">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <span class="text-xs mt-1">Videos</span>
-            </a>
-            <a href="plus.html" class="flex flex-col items-center py-2 px-3 text-gray-400 hover:text-orange-500">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                <span class="text-xs mt-1">Upload</span>
-            </a>
-        </div>
-    </nav>
+        <style>
+            @media (min-width: 1024px) {
+                main { padding-top: 4.5rem !important; }
+            }
+        </style>
     <!-- Navigation and header here (reuse your previous nav/header code) -->
     <main class="lg:pt-24 pb-20 lg:pb-0">
         <section id="journal" class="py-16 bg-[#18181b] min-h-screen">
@@ -73,8 +57,6 @@
                         </div>
                     </div>
                 </div>
-                <button id="openModalBtn" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-6 rounded-lg shadow transition duration-200 mb-8">
-                </button>
                 <div class="grid md:grid-cols-3 gap-8" id="journalGrid">
                     <div id="emptyMessage" class="col-span-3 flex flex-col items-center justify-center text-center text-gray-400 text-lg py-12">
                         <svg class="w-12 h-12 mb-4 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01"></path></svg>
