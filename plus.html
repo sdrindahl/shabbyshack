@@ -218,12 +218,13 @@
             const description = '';
             let uploaded = 0, failed = 0;
             let done = 0;
+            const apiUrl = 'https://shabbyshack-production.up.railway.app/stories';
             selectedFiles.forEach(file => {
                 const reader = new FileReader();
                 reader.onload = async function(evt) {
                     const imageData = evt.target.result;
                     try {
-                        const res = await fetch('/api/stories', {
+                        const res = await fetch(apiUrl, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
