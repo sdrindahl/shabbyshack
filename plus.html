@@ -91,15 +91,7 @@
                             <p class="text-sm text-gray-500 mt-2">PNG, JPG, GIF up to 10MB each</p>
                         </div>
 
-                        <div>
-                            <label for="name" class="block text-sm font-medium text-gray-400 text-left">Your Name</label>
-                            <input type="text" id="name" name="name" required class="mt-1 block w-full rounded-md border-gray-700 bg-gray-900 text-white shadow-sm focus:border-orange-500 focus:ring-orange-500 p-3">
-                        </div>
 
-                        <div>
-                            <label for="description" class="block text-sm font-medium text-gray-400 text-left">Photo Description</label>
-                            <textarea id="description" name="description" rows="3" class="mt-1 block w-full rounded-md border-gray-700 bg-gray-900 text-white shadow-sm focus:border-orange-500 focus:ring-orange-500 p-3" placeholder="Tell us about your photos..."></textarea>
-                        </div>
 
                         <div class="text-center">
                             <button type="submit" class="w-full md:w-auto bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-10 rounded-full transition duration-300 uppercase tracking-widest">Upload Photos</button>
@@ -218,17 +210,49 @@
                 alert('Please select at least one image to upload.');
                 return;
             }
-            
-            const name = document.getElementById('name').value;
-            const description = document.getElementById('description').value;
-            
-            alert(`Thank you, ${name}! Your photos have been received.\n\nDescription: ${description || '(none)'}\n\nFiles: ${selectedFiles.length} image(s)`);
-            
-            // Reset form
-            uploadForm.reset();
-            fileInput.value = '';
-            selectedFiles = [];
-            previewContainer.classList.add('hidden');
+            if (selectedFiles.length > 10) {
+                alert('You can upload up to 10 images at a time.');
+                return;
+            }
+            const name = '';
+            const description = '';
+            let uploaded = 0, failed = 0;
+            let done = 0;
+            selectedFiles.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = async function(evt) {
+                    const imageData = evt.target.result;
+                    try {
+                        const res = await fetch('/api/stories', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                name: name,
+                                text: description,
+                                image: imageData
+                            })
+                        });
+                        if (!res.ok) throw new Error('Upload failed');
+                        uploaded++;
+                    } catch (err) {
+                        failed++;
+                    } finally {
+                        done++;
+                        if (done === selectedFiles.length) {
+                            if (uploaded > 0) {
+                                alert(`Upload complete! ${uploaded} photo(s) uploaded. They will appear in the Gallery.`);
+                            } else {
+                                alert('Upload failed. Please try again.');
+                            }
+                            uploadForm.reset();
+                            fileInput.value = '';
+                            selectedFiles = [];
+                            previewContainer.classList.add('hidden');
+                        }
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
         });
     </script>
 
