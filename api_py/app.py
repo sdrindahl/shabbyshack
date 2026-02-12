@@ -188,8 +188,13 @@ def create_story():
                 return jsonify({'error': 'Image required'}), 400
         else:
             # FormData payload (files)
+            logger.info(f'FormData keys: {list(request.form.keys())}')
+            logger.info(f'Files keys: {list(request.files.keys())}')
+            
             name = request.form.get('name', 'Anonymous')
-            text = request.form.get('text', 'Uploaded photo')
+            text = request.form.get('text') or 'Uploaded photo'  # Ensure default if empty or None
+            
+            logger.info(f'Parsed FormData: name={name}, text={text}')
             
             if 'image' not in request.files:
                 logger.warning('No image file in FormData')
