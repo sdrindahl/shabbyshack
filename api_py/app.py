@@ -1,5 +1,5 @@
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import sqlite3
 import bcrypt
@@ -122,13 +122,21 @@ def login():
 # Verify upload password
 @app.route('/auth/verify-upload-password', methods=['POST'])
 def verify_upload_password():
-    data = request.get_json()
-    password = data.get('password')
-    if not password:
-        return jsonify({'error': 'Password required'}), 400
-    if password == UPLOAD_PASSWORD:
-        return jsonify({'success': True})
-    return jsonify({'error': 'Invalid password'}), 401
+    try:
+        data = request.get_json()
+        password = data.get('password')
+        logger.info(f'Password verification attempt: received="{password}", expected="{UPLOAD_PASSWORD}"')
+        if not password:
+            logger.warning('Password verification failed: no password provided')
+            return jsonify({'error': 'Password required'}), 400
+        if password == UPLOAD_PASSWORD:
+            logger.info('Password verification successful')
+            return jsonify({'success': True})
+        logger.warning(f'Password verification failed: password mismatch')
+        return jsonify({'error': 'Invalid password'}), 401
+    except Exception as e:
+        logger.error(f'Password verification error: {e}', exc_info=True)
+        return jsonify({'error': str(e)}), 500
 
 # Get stories
 @app.route('/stories', methods=['GET'])
@@ -198,6 +206,25 @@ def delete_story(id):
         return jsonify({'deleted': rowcount})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+# Serve HTML files from parent directory
+@app.route('/')
+def index():
+    return send_from_directory('../', 'index.html')
+
+@app.route('/<path:filename>')
+def serve_html(filename):
+    # Check if it's an HTML file in parent directory
+    if filename.endswith('.html') or filename.endswith('.css') or filename.endswith('.js'):
+        try:
+            return send_from_directory('../', filename)
+        except:
+            pass
+    # Check if it's an image or other asset
+    try:
+        return send_from_directory('../', filename)
+    except:
+        return jsonify({'error': 'Not found'}), 404
 
 # Global error handlers
 @app.errorhandler(404)

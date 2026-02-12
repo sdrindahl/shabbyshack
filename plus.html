@@ -232,7 +232,7 @@
 
             // Verify password
             try {
-                const verifyRes = await fetch('/api/auth/verify-upload-password', {
+                const verifyRes = await fetch('/auth/verify-upload-password', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ password })
@@ -250,7 +250,7 @@
             // Get auth token for upload
             let token = '';
             try {
-                const loginRes = await fetch('/api/auth/login', {
+                const loginRes = await fetch('/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -275,7 +275,7 @@
                 reader.onload = async function(evt) {
                     const imageData = evt.target.result;
                     try {
-                        const res = await fetch('/api/stories', {
+                        const res = await fetch('/stories', {
                             method: 'POST',
                             headers: { 
                                 'Content-Type': 'application/json',
