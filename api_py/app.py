@@ -8,6 +8,16 @@ import os
 from datetime import datetime, timedelta
 import functools
 import tempfile
+import logging
+import sys
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    stream=sys.stdout
+)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 CORS(app)
@@ -18,10 +28,14 @@ if os.path.exists('/tmp'):
 else:
     DB_PATH = './stories.db'
 
+logger.info(f'Database path: {DB_PATH}')
+
 JWT_SECRET = os.environ.get('JWT_SECRET', 'changeme')
 UPLOAD_PASSWORD = os.environ.get('UPLOAD_PASSWORD', '2040')
 PORT = int(os.environ.get('PORT', 5000))
 DEBUG = os.environ.get('FLASK_ENV') == 'development'
+
+logger.info(f'Starting app with PORT={PORT}, DEBUG={DEBUG}')
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
@@ -29,26 +43,33 @@ def get_db():
     return conn
 
 def init_db():
-    conn = get_db()
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE,
-        password TEXT
-    )''')
-    c.execute('''CREATE TABLE IF NOT EXISTS stories (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        text TEXT,
-        image TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )''')
-    c.execute('SELECT * FROM users WHERE username = ?', ('admin',))
-    if not c.fetchone():
-        hash_pw = bcrypt.hashpw('admin'.encode(), bcrypt.gensalt())
-        c.execute('INSERT INTO users (username, password) VALUES (?, ?)', ('admin', hash_pw))
-    conn.commit()
-    conn.close()
+    try:
+        logger.info(f'Initializing database at {DB_PATH}')
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('''CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE,
+            password TEXT
+        )''')
+        c.execute('''CREATE TABLE IF NOT EXISTS stories (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            text TEXT,
+            image TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )''')
+        c.execute('SELECT * FROM users WHERE username = ?', ('admin',))
+        if not c.fetchone():
+            logger.info('Creating default admin user')
+            hash_pw = bcrypt.hashpw('admin'.encode(), bcrypt.gensalt())
+            c.execute('INSERT INTO users (username, password) VALUES (?, ?)', ('admin', hash_pw))
+        conn.commit()
+        conn.close()
+        logger.info('Database initialized successfully')
+    except Exception as e:
+        logger.error(f'Database initialization failed: {e}', exc_info=True)
+        raise
 
 def authenticate_token(f):
     @functools.wraps(f)
@@ -178,9 +199,34 @@ def delete_story(id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# Global error handlers
+@app.errorhandler(404)
+def not_found(error):
+    logger.warning(f'404 error: {request.path} - {error}')
+    return jsonify({'error': 'Not found'}), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    logger.error(f'500 Internal Server Error: {error}', exc_info=True)
+    return jsonify({'error': 'Internal server error'}), 500
+
+@app.errorhandler(Exception)
+def handle_exception(error):
+    logger.error(f'Unhandled exception: {error}', exc_info=True)
+    return jsonify({'error': 'Internal server error', 'type': type(error).__name__}), 500
+
 if __name__ == '__main__':
     try:
+        logger.info('Starting database initialization...')
         init_db()
+        logger.info('Database initialization complete')
     except Exception as e:
-        print(f'Database initialization error: {e}')
-    app.run(host='0.0.0.0', port=PORT, debug=DEBUG)
+        logger.error(f'Failed to initialize database: {e}', exc_info=True)
+        logger.info('Continuing without database (will fail on first request)')
+    
+    logger.info(f'Flask app starting on 0.0.0.0:{PORT} (debug={DEBUG})')
+    try:
+        app.run(host='0.0.0.0', port=PORT, debug=DEBUG, use_reloader=False)
+    except Exception as e:
+        logger.error(f'Flask app crashed: {e}', exc_info=True)
+        sys.exit(1)
