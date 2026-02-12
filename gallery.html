@@ -57,6 +57,12 @@
                         </div>
                     </div>
                 </div>
+                <!-- Delete Toolbar -->
+                <div id="deleteToolbar" class="hidden mb-6 flex items-center gap-4 bg-[#232326] p-4 rounded-lg border border-green-900">
+                    <span id="selectedCount" class="text-gray-400">0 selected</span>
+                    <button id="deleteSelectedBtn" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg">Delete Selected</button>
+                    <button id="cancelSelectBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-6 rounded-lg">Cancel</button>
+                </div>
                 <div class="grid md:grid-cols-3 gap-8" id="journalGrid">
                     <div id="emptyMessage" class="col-span-3 flex flex-col items-center justify-center text-center text-gray-400 text-lg py-12">
                         <svg class="w-12 h-12 mb-4 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01"></path></svg>
@@ -88,6 +94,19 @@
                                 <input id="storyImage" type="file" accept="image/*" class="w-full px-4 py-2 rounded bg-gray-800 text-gray-200" />
                             </label>
                             <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-6 rounded-lg w-full">Submit</button>
+                        </form>
+                    </div>
+                </div>
+                <!-- Delete Password Modal -->
+                <div id="deletePasswordModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 hidden">
+                    <div class="bg-[#101014] rounded-lg shadow-xl p-8 w-full max-w-md relative">
+                        <button id="closeDeletePasswordModalBtn" class="absolute top-2 right-2 text-gray-400 hover:text-orange-500 text-2xl font-bold">&times;</button>
+                        <h3 class="text-2xl font-bold mb-4 text-orange-500 text-center">Delete Photos</h3>
+                        <p class="text-gray-400 mb-4 text-center">Enter password to delete selected photos</p>
+                        <form id="deletePasswordForm" class="flex flex-col gap-4">
+                            <input id="deletePassword" type="password" placeholder="Password" class="px-4 py-2 rounded bg-gray-800 text-gray-200" required />
+                            <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg">Delete</button>
+                            <span id="deletePasswordStatus" class="text-sm text-center"></span>
                         </form>
                     </div>
                 </div>
@@ -209,11 +228,17 @@
             }
             stories.forEach(story => {
                 const article = document.createElement('article');
-                article.className = 'bg-[#232326] rounded-xl overflow-hidden shadow-xl border border-green-900 hover:shadow-2xl transition duration-200';
+                article.className = 'bg-[#232326] rounded-xl overflow-hidden shadow-xl border border-green-900 hover:shadow-2xl transition duration-200 relative';
+                article.dataset.storyId = story.id;
+                
+                // Checkbox overlay
+                const checkboxOverlay = `<div class="select-checkbox absolute top-2 left-2 z-20 hidden"><input type="checkbox" class="story-select-checkbox w-5 h-5 cursor-pointer" data-story-id="${story.id}" /></div>`;
+                
                 let editDeleteBtns = authToken ? `<button class='edit-story-btn p-1 rounded-full bg-black/60 text-gray-300 hover:text-orange-500 focus:outline-none' title='Edit' style='font-size:1.2rem;'>✏️</button><button class='delete-story-btn p-1 rounded-full bg-black/60 text-gray-300 hover:text-red-500 focus:outline-none' title='Delete' style='font-size:1.2rem;'>🗑️</button>` : '';
                 let imgTag = story.image ? `<div class='relative'><img src='${story.image}' alt='User Story Image' class='w-full h-56 object-cover rounded-t-xl border-b border-green-900'><div class="absolute top-2 right-2 flex gap-2 z-10">${editDeleteBtns}</div></div>` : '';
                 let noImgBtns = !story.image ? `<div class="flex justify-end gap-2 mb-2">${editDeleteBtns}</div>` : '';
                 article.innerHTML = `
+                    ${checkboxOverlay}
                     ${imgTag}
                     <div class="p-4">
                         ${noImgBtns}
@@ -256,30 +281,55 @@
                     }
                 }
                 grid.appendChild(article);
-                            // Make card clickable to view full story
-                            article.style.cursor = 'pointer';
-                            article.addEventListener('click', function(e) {
-                                // Prevent modal on edit/delete button click
-                                if (e.target.classList.contains('edit-story-btn') || e.target.classList.contains('delete-story-btn')) return;
-                                // Create and show modal with full image and note
-                                let modal = document.createElement('div');
-                                modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80';
-                                modal.innerHTML = `
-                                    <div class="bg-[#232326] border border-green-900 rounded-xl shadow-2xl p-6 w-full max-w-lg relative">
-                                        <button class="absolute top-2 right-2 text-gray-400 hover:text-orange-500 text-2xl font-bold" id="closeStoryViewBtn">&times;</button>
-                                        ${story.image ? `<img src='${story.image}' alt='User Story Image' class='w-full max-h-96 object-contain rounded mb-4'>` : ''}
-                                        <p class="text-xs text-orange-400 mb-2">${story.created_at ? new Date(story.created_at).toLocaleDateString() : ''} | Shared Memory</p>
-                                        <p class="text-gray-200 italic text-base">${story.text}</p>
-                                    </div>
-                                `;
-                                document.body.appendChild(modal);
-                                document.getElementById('closeStoryViewBtn').addEventListener('click', function() {
-                                    modal.remove();
-                                });
-                                modal.addEventListener('click', function(ev) {
-                                    if (ev.target === modal) modal.remove();
-                                });
-                            });
+                
+                // Checkbox event handler
+                const checkbox = article.querySelector('.story-select-checkbox');
+                if (checkbox) {
+                    checkbox.addEventListener('change', function(e) {
+                        e.stopPropagation();
+                        updateSelectionUI();
+                    });
+                }
+                
+                // Show checkbox on hover (or click article to enter select mode)
+                article.addEventListener('mouseenter', function() {
+                    if (document.getElementById('deleteToolbar').classList.contains('hidden') === false) {
+                        const checkboxDiv = article.querySelector('.select-checkbox');
+                        if (checkboxDiv) checkboxDiv.classList.remove('hidden');
+                    }
+                });
+                article.addEventListener('mouseleave', function() {
+                    const checkbox = article.querySelector('.story-select-checkbox');
+                    if (!checkbox || !checkbox.checked) {
+                        const checkboxDiv = article.querySelector('.select-checkbox');
+                        if (checkboxDiv) checkboxDiv.classList.add('hidden');
+                    }
+                });
+                
+                // Make card clickable to view full story
+                article.style.cursor = 'pointer';
+                article.addEventListener('click', function(e) {
+                    // Prevent modal on edit/delete button click or checkbox click
+                    if (e.target.classList.contains('edit-story-btn') || e.target.classList.contains('delete-story-btn') || e.target.classList.contains('story-select-checkbox')) return;
+                    // Create and show modal with full image and note
+                    let modal = document.createElement('div');
+                    modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80';
+                    modal.innerHTML = `
+                        <div class="bg-[#232326] border border-green-900 rounded-xl shadow-2xl p-6 w-full max-w-lg relative">
+                            <button class="absolute top-2 right-2 text-gray-400 hover:text-orange-500 text-2xl font-bold" id="closeStoryViewBtn">&times;</button>
+                            ${story.image ? `<img src='${story.image}' alt='User Story Image' class='w-full max-h-96 object-contain rounded mb-4'>` : ''}
+                            <p class="text-xs text-orange-400 mb-2">${story.created_at ? new Date(story.created_at).toLocaleDateString() : ''} | Shared Memory</p>
+                            <p class="text-gray-200 italic text-base">${story.text}</p>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                    document.getElementById('closeStoryViewBtn').addEventListener('click', function() {
+                        modal.remove();
+                    });
+                    modal.addEventListener('click', function(ev) {
+                        if (ev.target === modal) modal.remove();
+                    });
+                });
             });
         } catch (err) {
             const msg = document.createElement('div');
@@ -290,6 +340,132 @@
             console.error(err);
         }
     }
+    
+    // --- SELECTION AND DELETE FUNCTIONS ---
+    const selectedStories = new Set();
+    
+    function updateSelectionUI() {
+        selectedStories.clear();
+        document.querySelectorAll('.story-select-checkbox:checked').forEach(cb => {
+            selectedStories.add(parseInt(cb.dataset.storyId));
+        });
+        
+        const toolbar = document.getElementById('deleteToolbar');
+        const selectedCount = document.getElementById('selectedCount');
+        
+        if (selectedStories.size > 0) {
+            toolbar.classList.remove('hidden');
+            selectedCount.textContent = `${selectedStories.size} selected`;
+        } else {
+            toolbar.classList.add('hidden');
+            // Hide checkboxes when nothing selected
+            document.querySelectorAll('.select-checkbox').forEach(div => {
+                const cb = div.querySelector('.story-select-checkbox');
+                if (!cb || !cb.checked) {
+                    div.classList.add('hidden');
+                }
+            });
+        }
+    }
+    
+    // Delete Selected button handler
+    const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+    if (deleteSelectedBtn) {
+        deleteSelectedBtn.addEventListener('click', function() {
+            if (selectedStories.size === 0) {
+                alert('Please select photos to delete');
+                return;
+            }
+            document.getElementById('deletePasswordModal').classList.remove('hidden');
+            document.getElementById('deletePassword').focus();
+            document.getElementById('deletePasswordStatus').textContent = '';
+        });
+    }
+    
+    // Cancel selection button handler
+    const cancelSelectBtn = document.getElementById('cancelSelectBtn');
+    if (cancelSelectBtn) {
+        cancelSelectBtn.addEventListener('click', function() {
+            selectedStories.clear();
+            document.querySelectorAll('.story-select-checkbox').forEach(cb => cb.checked = false);
+            updateSelectionUI();
+        });
+    }
+    
+    // Delete password form handler
+    const deletePasswordForm = document.getElementById('deletePasswordForm');
+    if (deletePasswordForm) {
+        deletePasswordForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const password = document.getElementById('deletePassword').value.trim();
+            const statusSpan = document.getElementById('deletePasswordStatus');
+            
+            if (!password) {
+                statusSpan.textContent = 'Password required';
+                statusSpan.className = 'text-red-400 text-sm text-center';
+                return;
+            }
+            
+            if (selectedStories.size === 0) {
+                statusSpan.textContent = 'No photos selected';
+                statusSpan.className = 'text-red-400 text-sm text-center';
+                return;
+            }
+            
+            try {
+                statusSpan.textContent = 'Deleting...';
+                statusSpan.className = 'text-gray-400 text-sm text-center';
+                
+                const res = await fetch('https://shabbyshack-production.up.railway.app/stories/delete-with-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password, ids: Array.from(selectedStories) })
+                });
+                
+                if (!res.ok) {
+                    const data = await res.json();
+                    throw new Error(data.error || 'Failed to delete photos');
+                }
+                
+                statusSpan.textContent = 'Photos deleted successfully!';
+                statusSpan.className = 'text-green-400 text-sm text-center';
+                
+                // Close modal and refresh
+                setTimeout(() => {
+                    document.getElementById('deletePasswordModal').classList.add('hidden');
+                    document.getElementById('deletePasswordForm').reset();
+                    selectedStories.clear();
+                    updateSelectionUI();
+                    loadStoriesFromAPI();
+                }, 800);
+            } catch (err) {
+                statusSpan.textContent = err.message;
+                statusSpan.className = 'text-red-400 text-sm text-center';
+            }
+        });
+    }
+    
+    // Close delete password modal
+    const closeDeletePasswordModalBtn = document.getElementById('closeDeletePasswordModalBtn');
+    if (closeDeletePasswordModalBtn) {
+        closeDeletePasswordModalBtn.addEventListener('click', function() {
+            document.getElementById('deletePasswordModal').classList.add('hidden');
+            document.getElementById('deletePasswordForm').reset();
+            document.getElementById('deletePasswordStatus').textContent = '';
+        });
+    }
+    
+    const deletePasswordModal = document.getElementById('deletePasswordModal');
+    if (deletePasswordModal) {
+        deletePasswordModal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.add('hidden');
+                document.getElementById('deletePasswordForm').reset();
+                document.getElementById('deletePasswordStatus').textContent = '';
+            }
+        });
+    }
+    
     // Load stories on page load
     window.addEventListener('DOMContentLoaded', loadStoriesFromAPI);
     // Show/hide login/logout on page load

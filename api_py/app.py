@@ -249,6 +249,50 @@ def update_story(id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# Delete stories with password verification
+@app.route('/stories/delete-with-password', methods=['POST'])
+def delete_stories_with_password():
+    try:
+        data = request.get_json()
+        password = data.get('password')
+        ids = data.get('ids', [])
+        
+        logger.info(f'Delete with password attempt: {len(ids)} stories, password provided: {bool(password)}')
+        
+        if not password:
+            logger.warning('Delete with password failed: no password provided')
+            return jsonify({'error': 'Password required'}), 400
+        
+        if not isinstance(ids, list) or len(ids) == 0:
+            logger.warning('Delete with password failed: no story IDs provided')
+            return jsonify({'error': 'No stories selected'}), 400
+        
+        # Verify password
+        if password != UPLOAD_PASSWORD:
+            logger.warning(f'Delete with password failed: password mismatch')
+            return jsonify({'error': 'Invalid password'}), 401
+        
+        logger.info(f'Password verified, deleting {len(ids)} stories: {ids}')
+        
+        # Delete all stories with provided IDs
+        conn = get_db()
+        c = conn.cursor()
+        
+        # Delete each story
+        deleted_count = 0
+        for story_id in ids:
+            c.execute('DELETE FROM stories WHERE id = ?', (story_id,))
+            deleted_count += c.rowcount
+        
+        conn.commit()
+        conn.close()
+        
+        logger.info(f'Successfully deleted {deleted_count} stories')
+        return jsonify({'success': True, 'deleted': deleted_count})
+    except Exception as e:
+        logger.error(f'Failed to delete stories with password: {e}', exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
 # Delete story
 @app.route('/stories/<int:id>', methods=['DELETE'])
 @authenticate_token
