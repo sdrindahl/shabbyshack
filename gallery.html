@@ -244,10 +244,8 @@
                 
                 // Show checkbox on hover (or click article to enter select mode)
                 article.addEventListener('mouseenter', function() {
-                    if (document.getElementById('deleteToolbar').classList.contains('hidden') === false) {
-                        const checkboxDiv = article.querySelector('.select-checkbox');
-                        if (checkboxDiv) checkboxDiv.classList.remove('hidden');
-                    }
+                    const checkboxDiv = article.querySelector('.select-checkbox');
+                    if (checkboxDiv) checkboxDiv.classList.remove('hidden');
                 });
                 article.addEventListener('mouseleave', function() {
                     const checkbox = article.querySelector('.story-select-checkbox');
