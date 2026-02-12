@@ -19,6 +19,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Get the parent directory (project root) from the api_py directory
+APP_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(APP_DIR)
+logger.info(f'APP_DIR: {APP_DIR}')
+logger.info(f'PROJECT_ROOT: {PROJECT_ROOT}')
+
 app = Flask(__name__)
 CORS(app)
 
@@ -76,13 +82,19 @@ def authenticate_token(f):
     def wrapper(*args, **kwargs):
         auth_header = request.headers.get('Authorization', None)
         if not auth_header or not auth_header.startswith('Bearer '):
+            logger.warning('Missing or invalid Authorization header')
             return jsonify({'error': 'No token'}), 401
         token = auth_header.split(' ')[1]
         try:
             user = jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
+            logger.info(f'Token authenticated for user: {user.get("username")}')
             request.user = user
-        except jwt.InvalidTokenError:
+        except jwt.InvalidTokenError as e:
+            logger.warning(f'Invalid token: {e}')
             return jsonify({'error': 'Invalid token'}), 403
+        except Exception as e:
+            logger.error(f'Token authentication error: {e}', exc_info=True)
+            return jsonify({'error': 'Authentication error'}), 500
         return f(*args, **kwargs)
     return wrapper
 
@@ -105,18 +117,23 @@ def login():
         data = request.get_json()
         username = data.get('username')
         password = data.get('password')
+        logger.info(f'Login attempt for user: {username}')
         conn = get_db()
         c = conn.cursor()
         c.execute('SELECT * FROM users WHERE username = ?', (username,))
         user = c.fetchone()
         conn.close()
         if not user:
+            logger.warning(f'Login failed: user {username} not found')
             return jsonify({'error': 'Invalid credentials'}), 401
         if not bcrypt.checkpw(password.encode(), user['password']):
+            logger.warning(f'Login failed: invalid password for user {username}')
             return jsonify({'error': 'Invalid credentials'}), 401
         token = jwt.encode({'username': user['username'], 'id': user['id'], 'exp': datetime.utcnow() + timedelta(hours=2)}, JWT_SECRET, algorithm='HS256')
+        logger.info(f'Login successful for user: {username}')
         return jsonify({'token': token})
     except Exception as e:
+        logger.error(f'Login error: {e}', exc_info=True)
         return jsonify({'error': str(e)}), 500
 
 # Verify upload password
@@ -157,20 +174,25 @@ def get_stories():
 @authenticate_token
 def create_story():
     try:
+        logger.info('Create story endpoint called')
         data = request.get_json()
+        logger.info(f'Received data: name={data.get("name")}, has_image={bool(data.get("image"))}')
         name = data.get('name', 'Anonymous')
-        text = data.get('text')
+        text = data.get('text', 'Uploaded photo')  # Default if empty
         image = data.get('image', '')
-        if not text:
-            return jsonify({'error': 'Text required'}), 400
+        if not image:
+            logger.warning('No image data provided')
+            return jsonify({'error': 'Image required'}), 400
         conn = get_db()
         c = conn.cursor()
         c.execute('INSERT INTO stories (name, text, image) VALUES (?, ?, ?)', (name, text, image))
         conn.commit()
         result_id = c.lastrowid
         conn.close()
+        logger.info(f'Story created successfully: id={result_id}')
         return jsonify({'id': result_id})
     except Exception as e:
+        logger.error(f'Failed to create story: {e}', exc_info=True)
         return jsonify({'error': str(e)}), 500
 
 # Update story
@@ -207,23 +229,27 @@ def delete_story(id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# Serve HTML files from parent directory
+# Serve HTML files from project root
 @app.route('/')
 def index():
-    return send_from_directory('../', 'index.html')
+    try:
+        return send_from_directory(PROJECT_ROOT, 'index.html')
+    except Exception as e:
+        logger.error(f'Failed to serve index.html: {e}')
+        return jsonify({'error': 'Not found'}), 404
 
 @app.route('/<path:filename>')
-def serve_html(filename):
-    # Check if it's an HTML file in parent directory
-    if filename.endswith('.html') or filename.endswith('.css') or filename.endswith('.js'):
-        try:
-            return send_from_directory('../', filename)
-        except:
-            pass
-    # Check if it's an image or other asset
+def serve_file(filename):
     try:
-        return send_from_directory('../', filename)
-    except:
+        file_path = os.path.join(PROJECT_ROOT, filename)
+        # Prevent directory traversal
+        if not os.path.abspath(file_path).startswith(os.path.abspath(PROJECT_ROOT)):
+            logger.warning(f'Attempted directory traversal: {filename}')
+            return jsonify({'error': 'Not found'}), 404
+        logger.debug(f'Serving file: {file_path}')
+        return send_from_directory(PROJECT_ROOT, filename)
+    except Exception as e:
+        logger.debug(f'File not found: {filename} - {e}')
         return jsonify({'error': 'Not found'}), 404
 
 # Global error handlers
