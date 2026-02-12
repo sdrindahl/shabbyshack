@@ -267,29 +267,34 @@
             }
 
             const name = '';
-            const description = '';
+            const description = 'Uploaded photo';
             let uploaded = 0, failed = 0;
             let done = 0;
             selectedFiles.forEach(file => {
-                const reader = new FileReader();
-                reader.onload = async function(evt) {
-                    const imageData = evt.target.result;
+                // Create FormData for each file
+                const formData = new FormData();
+                formData.append('name', name);
+                formData.append('text', description);
+                formData.append('image', file);  // Send the file directly
+                
+                (async () => {
                     try {
                         const res = await fetch('/stories', {
                             method: 'POST',
                             headers: { 
-                                'Content-Type': 'application/json',
                                 'Authorization': `Bearer ${token}`
+                                // Don't set Content-Type, browser will set it automatically
                             },
-                            body: JSON.stringify({
-                                name: name,
-                                text: description,
-                                image: imageData
-                            })
+                            body: formData
                         });
-                        if (!res.ok) throw new Error('Upload failed');
+                        if (!res.ok) {
+                            const errorMsg = await res.text();
+                            console.error('Upload error:', errorMsg);
+                            throw new Error(`Upload failed: ${res.status}`);
+                        }
                         uploaded++;
                     } catch (err) {
+                        console.error('Upload failed:', err);
                         failed++;
                     } finally {
                         done++;
@@ -298,7 +303,7 @@
                                 alert(`Upload complete! ${uploaded} photo(s) uploaded. They will appear in the Gallery.`);
                                 uploadPassword.value = '';
                             } else {
-                                alert('Upload failed. Please try again.');
+                                alert(`Upload failed. ${failed} photo(s) could not be uploaded.`);
                             }
                             uploadForm.reset();
                             fileInput.value = '';
@@ -306,8 +311,7 @@
                             previewContainer.classList.add('hidden');
                         }
                     }
-                };
-                reader.readAsDataURL(file);
+                })();
             });
         });
     </script>

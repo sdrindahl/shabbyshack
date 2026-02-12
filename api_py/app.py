@@ -175,14 +175,43 @@ def get_stories():
 def create_story():
     try:
         logger.info('Create story endpoint called')
-        data = request.get_json()
-        logger.info(f'Received data: name={data.get("name")}, has_image={bool(data.get("image"))}')
-        name = data.get('name', 'Anonymous')
-        text = data.get('text', 'Uploaded photo')  # Default if empty
-        image = data.get('image', '')
+        
+        # Handle both JSON and FormData
+        if request.is_json:
+            # JSON payload (legacy)
+            data = request.get_json()
+            name = data.get('name', 'Anonymous')
+            text = data.get('text', 'Uploaded photo')
+            image = data.get('image', '')
+            if not image:
+                logger.warning('No image data in JSON payload')
+                return jsonify({'error': 'Image required'}), 400
+        else:
+            # FormData payload (files)
+            name = request.form.get('name', 'Anonymous')
+            text = request.form.get('text', 'Uploaded photo')
+            
+            if 'image' not in request.files:
+                logger.warning('No image file in FormData')
+                return jsonify({'error': 'Image file required'}), 400
+            
+            file = request.files['image']
+            if file.filename == '':
+                logger.warning('Empty filename in upload')
+                return jsonify({'error': 'No file selected'}), 400
+            
+            # Read the file and encode to base64
+            import base64
+            file_data = file.read()
+            image = f'data:{file.content_type};base64,' + base64.b64encode(file_data).decode('utf-8')
+            logger.info(f'File received: {file.filename}, size: {len(file_data)} bytes')
+        
+        logger.info(f'Story creation: name={name}, has_image={bool(image)}, image_size={len(image) if image else 0}')
+        
         if not image:
             logger.warning('No image data provided')
             return jsonify({'error': 'Image required'}), 400
+        
         conn = get_db()
         c = conn.cursor()
         c.execute('INSERT INTO stories (name, text, image) VALUES (?, ?, ?)', (name, text, image))
