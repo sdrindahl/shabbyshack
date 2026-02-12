@@ -43,6 +43,7 @@ DEBUG = os.environ.get('FLASK_ENV') == 'development'
 
 logger.info(f'Starting app with PORT={PORT}, DEBUG={DEBUG}')
 
+# Force Railway rebuild - ensure delete-with-password endpoint is active
 def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
