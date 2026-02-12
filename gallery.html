@@ -111,57 +111,81 @@
         }
         loadStoriesFromAPI(); // Refresh UI on login/logout
     }
-    // Logout button handler
-    document.getElementById('logoutBtn').addEventListener('click', function() {
-        setAuthToken('');
-        document.getElementById('loginStatus').textContent = 'Logged out.';
-        document.getElementById('loginStatus').className = 'text-gray-400 text-sm ml-2';
-    });
+    // Logout button handler (if exists)
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function() {
+            setAuthToken('');
+            const status = document.getElementById('loginStatus');
+            if (status) {
+                status.textContent = 'Logged out.';
+                status.className = 'text-gray-400 text-sm ml-2';
+            }
+        });
+    }
 
     // Login modal open/close handlers
     // Remove Login button event handler
-        document.getElementById('openModalBtn').addEventListener('click', function() {
-            if (!authToken) {
-                document.getElementById('loginModal').classList.remove('hidden');
-                setTimeout(() => { document.getElementById('loginUsername').focus(); }, 100);
-            } else {
-                document.getElementById('storyModal').classList.remove('hidden');
-                setTimeout(() => { document.getElementById('storyText').focus(); }, 100);
-            }
-        });
-    document.getElementById('closeLoginModalBtn').addEventListener('click', function() {
-        document.getElementById('loginModal').classList.add('hidden');
-    });
-    document.getElementById('loginModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            this.classList.add('hidden');
+        const openModalBtn = document.getElementById('openModalBtn');
+        if (openModalBtn) {
+            openModalBtn.addEventListener('click', function() {
+                if (!authToken) {
+                    document.getElementById('loginModal').classList.remove('hidden');
+                    setTimeout(() => { document.getElementById('loginUsername').focus(); }, 100);
+                } else {
+                    document.getElementById('storyModal').classList.remove('hidden');
+                    setTimeout(() => { document.getElementById('storyText').focus(); }, 100);
+                }
+            });
         }
-    });
+        
+        const closeLoginModalBtn = document.getElementById('closeLoginModalBtn');
+        if (closeLoginModalBtn) {
+            closeLoginModalBtn.addEventListener('click', function() {
+                document.getElementById('loginModal').classList.add('hidden');
+            });
+        }
+        
+        const loginModal = document.getElementById('loginModal');
+        if (loginModal) {
+            loginModal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.add('hidden');
+                }
+            });
+        }
 
     // Login form handler
-    document.getElementById('loginForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const username = document.getElementById('loginUsername').value.trim();
-        const password = document.getElementById('loginPassword').value.trim();
-        const status = document.getElementById('loginStatus');
-        status.textContent = '';
-        try {
-            const res = await fetch('https://shabbyshack-production.up.railway.app/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            if (!res.ok) throw new Error('Login failed');
-            const data = await res.json();
-            setAuthToken(data.token);
-            status.textContent = 'Logged in!';
-            status.className = 'text-green-400 text-sm ml-2';
-        } catch (err) {
-            status.textContent = 'Login failed';
-            status.className = 'text-red-400 text-sm ml-2';
-            setAuthToken('');
-        }
-    });
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            const status = document.getElementById('loginStatus');
+            if (status) status.textContent = '';
+            try {
+                const res = await fetch('https://shabbyshack-production.up.railway.app/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                if (!res.ok) throw new Error('Login failed');
+                const data = await res.json();
+                setAuthToken(data.token);
+                if (status) {
+                    status.textContent = 'Logged in!';
+                    status.className = 'text-green-400 text-sm ml-2';
+                }
+            } catch (err) {
+                if (status) {
+                    status.textContent = 'Login failed';
+                    status.className = 'text-red-400 text-sm ml-2';
+                }
+                setAuthToken('');
+            }
+        });
+    }
 
     // --- LOAD STORIES FROM API ON PAGE LOAD ---
     async function loadStoriesFromAPI() {
@@ -279,35 +303,41 @@
                 document.getElementById('loginStatus').className = 'text-gray-400 text-sm ml-2';
             });
         }
-    document.getElementById('navMenuBtn').addEventListener('click', function(e) {
-        e.stopPropagation();
-        const dropdown = document.getElementById('navMenuDropdown');
-        dropdown.classList.toggle('hidden');
-    });
+    const navMenuBtn = document.getElementById('navMenuBtn');
+    if (navMenuBtn) {
+        navMenuBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const dropdown = document.getElementById('navMenuDropdown');
+            if (dropdown) dropdown.classList.toggle('hidden');
+        });
+    }
+    
     document.addEventListener('click', function() {
         const dropdown = document.getElementById('navMenuDropdown');
-        if (!dropdown.classList.contains('hidden')) dropdown.classList.add('hidden');
+        if (dropdown && !dropdown.classList.contains('hidden')) dropdown.classList.add('hidden');
     });
 
-    document.getElementById('openModalBtn').addEventListener('click', function() {
-        if (!authToken) {
-            document.getElementById('loginModal').classList.remove('hidden');
-            setTimeout(() => { document.getElementById('loginUsername').focus(); }, 100);
-        } else {
-            document.getElementById('storyModal').classList.remove('hidden');
-        }
-    });
-    document.getElementById('closeModalBtn').addEventListener('click', function() {
-        document.getElementById('storyModal').classList.add('hidden');
-    });
-    document.getElementById('storyModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            this.classList.add('hidden');
-        }
-    });
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', function() {
+            const modal = document.getElementById('storyModal');
+            if (modal) modal.classList.add('hidden');
+        });
+    }
+    
+    const storyModal = document.getElementById('storyModal');
+    if (storyModal) {
+        storyModal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.add('hidden');
+            }
+        });
+    }
 
     // Add story tile on submit (POST to API with auth)
-    document.getElementById('storyForm').addEventListener('submit', function(e) {
+    const storyForm = document.getElementById('storyForm');
+    if (storyForm) {
+        storyForm.addEventListener('submit', function(e) {
         e.preventDefault();
         if (!authToken) {
             document.getElementById('storyModal').classList.add('hidden');
@@ -349,10 +379,13 @@
         }
         document.getElementById('storyModal').classList.add('hidden');
         document.getElementById('storyForm').reset();
-    });
+        });
+    }
 
     // Edit story (PUT to API with auth)
-    document.getElementById('editStoryForm').addEventListener('submit', function(e) {
+    const editStoryForm = document.getElementById('editStoryForm');
+    if (editStoryForm) {
+        editStoryForm.addEventListener('submit', function(e) {
         e.preventDefault();
         if (!editingArticle) return;
         var name = document.getElementById('editStoryName').value.trim() || 'Anonymous';
@@ -387,16 +420,25 @@
         }
         document.getElementById('editModal').classList.add('hidden');
         document.getElementById('editStoryForm').reset();
-    });
+        });
+    }
 
-    document.getElementById('closeEditModalBtn').addEventListener('click', function() {
-        document.getElementById('editModal').classList.add('hidden');
-    });
-    document.getElementById('editModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            this.classList.add('hidden');
-        }
-    });
+    const closeEditModalBtn = document.getElementById('closeEditModalBtn');
+    if (closeEditModalBtn) {
+        closeEditModalBtn.addEventListener('click', function() {
+            const modal = document.getElementById('editModal');
+            if (modal) modal.classList.add('hidden');
+        });
+    }
+    
+    const editModal = document.getElementById('editModal');
+    if (editModal) {
+        editModal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.add('hidden');
+            }
+        });
+    }
     </script>
 
     <!-- Mobile bottom nav (fixed) -->
