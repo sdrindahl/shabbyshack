@@ -28,6 +28,21 @@ logger.info(f'PROJECT_ROOT: {PROJECT_ROOT}')
 app = Flask(__name__)
 CORS(app)
 
+# Database initialization flag
+_db_initialized = False
+
+def ensure_db_initialized():
+    """Lazy-initialize database on first use"""
+    global _db_initialized
+    if _db_initialized:
+        return
+    try:
+        init_db()
+        _db_initialized = True
+    except Exception as e:
+        logger.error(f'Failed to initialize database: {e}', exc_info=True)
+        # Don't crash - try again on next request
+
 # Use /tmp for Railway, current dir otherwise
 if os.path.exists('/tmp'):
     DB_PATH = '/tmp/stories.db'
@@ -103,18 +118,21 @@ def authenticate_token(f):
 @app.route('/ping', methods=['GET'])
 def ping():
     try:
+        ensure_db_initialized()
         conn = get_db()
         c = conn.cursor()
         c.execute('SELECT 1')
         conn.close()
         return jsonify({'message': 'pong', 'db': 'ok'})
     except Exception as e:
+        logger.warning(f'Health check DB error: {e}')
         return jsonify({'message': 'pong', 'db': 'error', 'error': str(e)}), 200
 
 # Auth route
 @app.route('/auth/login', methods=['POST'])
 def login():
     try:
+        ensure_db_initialized()
         data = request.get_json()
         username = data.get('username')
         password = data.get('password')
@@ -160,6 +178,7 @@ def verify_upload_password():
 @app.route('/stories', methods=['GET'])
 def get_stories():
     try:
+        ensure_db_initialized()
         conn = get_db()
         c = conn.cursor()
         c.execute('SELECT * FROM stories ORDER BY created_at DESC')
@@ -168,6 +187,7 @@ def get_stories():
         conn.close()
         return jsonify(stories)
     except Exception as e:
+        logger.error(f'Get stories error: {e}', exc_info=True)
         return jsonify({'error': str(e)}), 500
 
 # Create story
@@ -175,6 +195,7 @@ def get_stories():
 @authenticate_token
 def create_story():
     try:
+        ensure_db_initialized()
         logger.info('Create story endpoint called')
         
         # Handle both JSON and FormData
@@ -236,6 +257,7 @@ def create_story():
 @authenticate_token
 def update_story(id):
     try:
+        ensure_db_initialized()
         data = request.get_json()
         name = data.get('name')
         text = data.get('text')
@@ -255,6 +277,7 @@ def update_story(id):
 @app.route('/stories/delete-with-password', methods=['POST'])
 def delete_stories_with_password():
     try:
+        ensure_db_initialized()
         data = request.get_json()
         password = data.get('password')
         ids = data.get('ids', [])
@@ -300,6 +323,7 @@ def delete_stories_with_password():
 @authenticate_token
 def delete_story(id):
     try:
+        ensure_db_initialized()
         conn = get_db()
         c = conn.cursor()
         c.execute('DELETE FROM stories WHERE id = ?', (id,))
@@ -349,14 +373,8 @@ def handle_exception(error):
     logger.error(f'Unhandled exception: {error}', exc_info=True)
     return jsonify({'error': 'Internal server error', 'type': type(error).__name__}), 500
 
-# Initialize database at module load time for both dev and production
-try:
-    logger.info('Initializing database at module load...')
-    init_db()
-    logger.info('Database initialization complete')
-except Exception as e:
-    logger.error(f'Failed to initialize database at startup: {e}', exc_info=True)
-    logger.warning('Database initialization failed but app will continue')
+# Flask app initialization complete - database will be initialized on first use
+logger.info(f'Flask app initialized, ready to start on 0.0.0.0:{PORT}')
 
 if __name__ == '__main__':
     logger.info(f'Flask app starting on 0.0.0.0:{PORT} (debug={DEBUG})')
