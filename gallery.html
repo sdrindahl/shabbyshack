@@ -271,6 +271,11 @@
                                         method: 'DELETE',
                                         headers: { 'Authorization': 'Bearer ' + authToken }
                                     });
+                                    if (res.status === 403 || res.status === 401) {
+                                        // Token is invalid/expired, fallback to password-based delete
+                                        showPasswordDeleteModal([story.id]);
+                                        return;
+                                    }
                                     if (!res.ok) throw new Error('Failed to delete');
                                     loadStoriesFromAPI();
                                 } catch (err) {
@@ -343,6 +348,18 @@
     
     // --- SELECTION AND DELETE FUNCTIONS ---
     const selectedStories = new Set();
+    let pendingDeleteIds = [];  // For fallback password-based delete
+    
+    function showPasswordDeleteModal(storyIds = null) {
+        pendingDeleteIds = storyIds || Array.from(selectedStories);
+        if (pendingDeleteIds.length === 0) {
+            alert('Please select photos to delete');
+            return;
+        }
+        document.getElementById('deletePasswordModal').classList.remove('hidden');
+        document.getElementById('deletePassword').focus();
+        document.getElementById('deletePasswordStatus').textContent = '';
+    }
     
     function updateSelectionUI() {
         selectedStories.clear();
@@ -372,13 +389,7 @@
     const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
     if (deleteSelectedBtn) {
         deleteSelectedBtn.addEventListener('click', function() {
-            if (selectedStories.size === 0) {
-                alert('Please select photos to delete');
-                return;
-            }
-            document.getElementById('deletePasswordModal').classList.remove('hidden');
-            document.getElementById('deletePassword').focus();
-            document.getElementById('deletePasswordStatus').textContent = '';
+            showPasswordDeleteModal();
         });
     }
     
@@ -387,6 +398,7 @@
     if (cancelSelectBtn) {
         cancelSelectBtn.addEventListener('click', function() {
             selectedStories.clear();
+            pendingDeleteIds = [];
             document.querySelectorAll('.story-select-checkbox').forEach(cb => cb.checked = false);
             updateSelectionUI();
         });
@@ -406,7 +418,10 @@
                 return;
             }
             
-            if (selectedStories.size === 0) {
+            // Use pending IDs if set (from fallback delete), otherwise use selected
+            const idsToDelete = pendingDeleteIds.length > 0 ? pendingDeleteIds : Array.from(selectedStories);
+            
+            if (idsToDelete.length === 0) {
                 statusSpan.textContent = 'No photos selected';
                 statusSpan.className = 'text-red-400 text-sm text-center';
                 return;
@@ -419,7 +434,7 @@
                 const res = await fetch('https://shabbyshack-production.up.railway.app/stories/delete-with-password', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password, ids: Array.from(selectedStories) })
+                    body: JSON.stringify({ password, ids: idsToDelete })
                 });
                 
                 if (!res.ok) {
@@ -434,6 +449,7 @@
                 setTimeout(() => {
                     document.getElementById('deletePasswordModal').classList.add('hidden');
                     document.getElementById('deletePasswordForm').reset();
+                    pendingDeleteIds = [];
                     selectedStories.clear();
                     updateSelectionUI();
                     loadStoriesFromAPI();
@@ -452,6 +468,7 @@
             document.getElementById('deletePasswordModal').classList.add('hidden');
             document.getElementById('deletePasswordForm').reset();
             document.getElementById('deletePasswordStatus').textContent = '';
+            pendingDeleteIds = [];
         });
     }
     
@@ -462,6 +479,7 @@
                 this.classList.add('hidden');
                 document.getElementById('deletePasswordForm').reset();
                 document.getElementById('deletePasswordStatus').textContent = '';
+                pendingDeleteIds = [];
             }
         });
     }
