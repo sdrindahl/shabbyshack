@@ -271,21 +271,23 @@
             let uploaded = 0, failed = 0;
             let done = 0;
             selectedFiles.forEach(file => {
-                // Create FormData for each file
-                const formData = new FormData();
-                formData.append('name', name);
-                formData.append('text', description);
-                formData.append('image', file);  // Send the file directly
-                
-                (async () => {
+                // Convert file to base64 and send as JSON
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const imageData = e.target.result;  // base64 string
+                    
                     try {
                         const res = await fetch('https://shabbyshack-production.up.railway.app/stories', {
                             method: 'POST',
                             headers: { 
-                                'Authorization': `Bearer ${token}`
-                                // Don't set Content-Type, browser will set it automatically
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
                             },
-                            body: formData
+                            body: JSON.stringify({
+                                name: name,
+                                text: description,
+                                image: imageData  // base64 string
+                            })
                         });
                         if (!res.ok) {
                             const errorMsg = await res.text();
@@ -311,7 +313,8 @@
                             previewContainer.classList.add('hidden');
                         }
                     }
-                })();
+                };
+                reader.readAsDataURL(file);  // Start reading the file
             });
         });
     </script>

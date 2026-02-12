@@ -181,8 +181,9 @@ def create_story():
             # JSON payload (legacy)
             data = request.get_json()
             name = data.get('name', 'Anonymous')
-            text = data.get('text', 'Uploaded photo')
+            text = data.get('text') or 'Uploaded photo'  # Ensure default if empty or None
             image = data.get('image', '')
+            logger.info(f'JSON payload: name={name}, has_text={bool(text)}, image_size={len(image) if image else 0}')
             if not image:
                 logger.warning('No image data in JSON payload')
                 return jsonify({'error': 'Image required'}), 400
