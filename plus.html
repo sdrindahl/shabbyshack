@@ -232,7 +232,7 @@
 
             // Verify password
             try {
-                const verifyRes = await fetch('/auth/verify-upload-password', {
+                const verifyRes = await fetch('https://shabbyshack-production.up.railway.app/auth/verify-upload-password', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ password })
@@ -250,7 +250,7 @@
             // Get auth token for upload
             let token = '';
             try {
-                const loginRes = await fetch('/auth/login', {
+                const loginRes = await fetch('https://shabbyshack-production.up.railway.app/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -279,7 +279,7 @@
                 
                 (async () => {
                     try {
-                        const res = await fetch('/stories', {
+                        const res = await fetch('https://shabbyshack-production.up.railway.app/stories', {
                             method: 'POST',
                             headers: { 
                                 'Authorization': `Bearer ${token}`
