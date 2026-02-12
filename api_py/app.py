@@ -215,15 +215,16 @@ def handle_exception(error):
     logger.error(f'Unhandled exception: {error}', exc_info=True)
     return jsonify({'error': 'Internal server error', 'type': type(error).__name__}), 500
 
+# Initialize database at module load time for both dev and production
+try:
+    logger.info('Initializing database at module load...')
+    init_db()
+    logger.info('Database initialization complete')
+except Exception as e:
+    logger.error(f'Failed to initialize database at startup: {e}', exc_info=True)
+    logger.warning('Database initialization failed but app will continue')
+
 if __name__ == '__main__':
-    try:
-        logger.info('Starting database initialization...')
-        init_db()
-        logger.info('Database initialization complete')
-    except Exception as e:
-        logger.error(f'Failed to initialize database: {e}', exc_info=True)
-        logger.info('Continuing without database (will fail on first request)')
-    
     logger.info(f'Flask app starting on 0.0.0.0:{PORT} (debug={DEBUG})')
     try:
         app.run(host='0.0.0.0', port=PORT, debug=DEBUG, use_reloader=False)
