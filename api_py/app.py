@@ -250,6 +250,7 @@ def update_story(id):
         return jsonify({'error': str(e)}), 500
 
 # Delete stories with password verification
+# This endpoint allows bulk deletion with password authentication
 @app.route('/stories/delete-with-password', methods=['POST'])
 def delete_stories_with_password():
     try:
