@@ -41,6 +41,8 @@ db.serialize(() => {
 
 // Auth middleware
 const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
+const UPLOAD_PASSWORD = process.env.UPLOAD_PASSWORD || '2040';
+
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -51,6 +53,16 @@ function authenticateToken(req, res, next) {
     next();
   });
 }
+
+// Verify upload password
+app.post('/auth/verify-upload-password', (req, res) => {
+  const { password } = req.body;
+  if (!password) return res.status(400).json({ error: 'Password required' });
+  if (password === UPLOAD_PASSWORD) {
+    return res.json({ success: true });
+  }
+  return res.status(401).json({ error: 'Invalid password' });
+});
 
 // Auth routes
 app.post('/auth/login', (req, res) => {

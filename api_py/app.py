@@ -12,6 +12,7 @@ CORS(app)
 
 DB_PATH = './stories.db'
 JWT_SECRET = os.environ.get('JWT_SECRET', 'changeme')
+UPLOAD_PASSWORD = os.environ.get('UPLOAD_PASSWORD', '2040')
 PORT = int(os.environ.get('PORT', 5000))
 
 def get_db():
@@ -77,6 +78,17 @@ def login():
         return jsonify({'error': 'Invalid credentials'}), 401
     token = jwt.encode({'username': user['username'], 'id': user['id'], 'exp': datetime.utcnow() + timedelta(hours=2)}, JWT_SECRET, algorithm='HS256')
     return jsonify({'token': token})
+
+# Verify upload password
+@app.route('/auth/verify-upload-password', methods=['POST'])
+def verify_upload_password():
+    data = request.get_json()
+    password = data.get('password')
+    if not password:
+        return jsonify({'error': 'Password required'}), 400
+    if password == UPLOAD_PASSWORD:
+        return jsonify({'success': True})
+    return jsonify({'error': 'Invalid password'}), 401
 
 # Get stories
 @app.route('/stories', methods=['GET'])
