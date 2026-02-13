@@ -64,37 +64,22 @@
                 </div>
                 <!-- Filters Section -->
                 <div id="filtersSection" class="mb-8 bg-[#232326] p-6 rounded-lg border border-green-900">
-                    <h3 class="text-lg font-bold text-orange-500 mb-4">Filters & Sort</h3>
-                    <div class="grid md:grid-cols-4 gap-4">
-                        <!-- Date Range -->
-                        <div>
-                            <label class="block text-sm text-gray-400 mb-2">From Date</label>
-                            <input type="date" id="filterDateFrom" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-200 text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-sm text-gray-400 mb-2">To Date</label>
-                            <input type="date" id="filterDateTo" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-200 text-sm">
+                    <h3 class="text-lg font-bold text-orange-500 mb-4">Sort By</h3>
+                    <div class="flex gap-4">
+                        <!-- Year -->
+                        <div class="flex-1">
+                            <label class="block text-sm text-gray-400 mb-2">Year</label>
+                            <select id="filterYear" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-200 text-sm">
+                                <option value="">All Years</option>
+                            </select>
                         </div>
                         <!-- Uploaded By -->
-                        <div>
+                        <div class="flex-1">
                             <label class="block text-sm text-gray-400 mb-2">Uploaded By</label>
                             <select id="filterUploadedBy" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-200 text-sm">
                                 <option value="">All</option>
                             </select>
                         </div>
-                        <!-- Sort By -->
-                        <div>
-                            <label class="block text-sm text-gray-400 mb-2">Sort By</label>
-                            <select id="sortBy" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-200 text-sm">
-                                <option value="date-newest">Date (Newest)</option>
-                                <option value="date-oldest">Date (Oldest)</option>
-                                <option value="name-az">Name (A-Z)</option>
-                                <option value="name-za">Name (Z-A)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="mt-4">
-                        <button id="resetFiltersBtn" class="bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold py-2 px-6 rounded">Reset Filters</button>
                     </div>
                 </div>
                 <div class="grid md:grid-cols-3 gap-8" id="journalGrid">
@@ -278,6 +263,21 @@
     let allStories = [];
     let filteredStories = [];
     
+    // Get unique years from stories
+    function updateYearDropdown() {
+        const years = [...new Set(allStories.map(s => new Date(s.created_at).getFullYear()).filter(Boolean))].sort((a, b) => b - a);
+        const select = document.getElementById('filterYear');
+        const currentValue = select.value;
+        select.innerHTML = '<option value="">All Years</option>';
+        years.forEach(year => {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            select.appendChild(option);
+        });
+        select.value = currentValue;
+    }
+    
     // Get unique uploader names from stories
     function updateUploaderDropdown() {
         const uploaders = [...new Set(allStories.map(s => s.name).filter(Boolean))].sort();
@@ -293,27 +293,17 @@
         select.value = currentValue;
     }
     
-    // Apply filters and sorting
+    // Apply filters
     function applyFilters() {
-        const dateFrom = document.getElementById('filterDateFrom').value;
-        const dateTo = document.getElementById('filterDateTo').value;
+        const year = document.getElementById('filterYear').value;
         const uploadedBy = document.getElementById('filterUploadedBy').value;
-        const sortBy = document.getElementById('sortBy').value;
         
         // Filter
         filteredStories = allStories.filter(story => {
-            // Date filter
-            if (dateFrom || dateTo) {
-                const storyDate = new Date(story.created_at);
-                if (dateFrom) {
-                    const fromDate = new Date(dateFrom);
-                    if (storyDate < fromDate) return false;
-                }
-                if (dateTo) {
-                    const toDate = new Date(dateTo);
-                    toDate.setHours(23, 59, 59, 999); // End of day
-                    if (storyDate > toDate) return false;
-                }
+            // Year filter
+            if (year) {
+                const storyYear = new Date(story.created_at).getFullYear().toString();
+                if (storyYear !== year) return false;
             }
             
             // Uploader filter
@@ -322,22 +312,8 @@
             return true;
         });
         
-        // Sort
-        switch(sortBy) {
-            case 'date-oldest':
-                filteredStories.sort((a, b) => a.created_at - b.created_at);
-                break;
-            case 'name-az':
-                filteredStories.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-                break;
-            case 'name-za':
-                filteredStories.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
-                break;
-            case 'date-newest':
-            default:
-                filteredStories.sort((a, b) => b.created_at - a.created_at);
-                break;
-        }
+        // Sort by date (newest first)
+        filteredStories.sort((a, b) => b.created_at - a.created_at);
         
         renderStories(filteredStories);
     }
@@ -443,6 +419,7 @@
             if (!res.ok) throw new Error('Failed to fetch stories');
             allStories = await res.json();
             console.log('Loaded', allStories.length, 'stories');
+            updateYearDropdown();
             updateUploaderDropdown();
             applyFilters();
         } catch (err) {
@@ -598,19 +575,8 @@
     window.addEventListener('DOMContentLoaded', loadStoriesFromAPI);
     
     // Add filter event listeners
-    document.getElementById('filterDateFrom').addEventListener('change', applyFilters);
-    document.getElementById('filterDateTo').addEventListener('change', applyFilters);
+    document.getElementById('filterYear').addEventListener('change', applyFilters);
     document.getElementById('filterUploadedBy').addEventListener('change', applyFilters);
-    document.getElementById('sortBy').addEventListener('change', applyFilters);
-    
-    // Reset filters button
-    document.getElementById('resetFiltersBtn').addEventListener('click', function() {
-        document.getElementById('filterDateFrom').value = '';
-        document.getElementById('filterDateTo').value = '';
-        document.getElementById('filterUploadedBy').value = '';
-        document.getElementById('sortBy').value = 'date-newest';
-        applyFilters();
-    });
     
     // Show/hide login/logout on page load
     // Nav menu dropdown for logout
