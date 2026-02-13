@@ -468,6 +468,12 @@
         function openUploadModal() {
             uploadModal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
+            const cachedPassword = getCachedPassword();
+            if (cachedPassword) {
+                uploadPassword.value = cachedPassword;
+            } else {
+                uploadPassword.value = '';
+            }
         }
         
         function closeUploadModal() {
@@ -482,6 +488,36 @@
         uploadModal.addEventListener('click', (e) => {
             if (e.target === uploadModal) closeUploadModal();
         });
+        
+        // Helper to get cached password if valid (within 5 minutes)
+        function getCachedPassword() {
+            const stored = localStorage.getItem('uploadPassword');
+            if (!stored) return null;
+            
+            try {
+                const { password, timestamp } = JSON.parse(stored);
+                const now = Date.now();
+                const ageMs = now - timestamp;
+                const fiveMinutesMs = 5 * 60 * 1000;
+                
+                if (ageMs < fiveMinutesMs) {
+                    return password;
+                } else {
+                    localStorage.removeItem('uploadPassword');
+                    return null;
+                }
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // Helper to cache password
+        function cachePassword(password) {
+            localStorage.setItem('uploadPassword', JSON.stringify({
+                password: password,
+                timestamp: Date.now()
+            }));
+        }
         
         // Upload Form Handling
         const fileInput = document.getElementById('fileInput');
@@ -527,6 +563,9 @@
                     fileInput.value = '';
                     return;
                 }
+                
+                // Cache the correct password
+                cachePassword(password);
             } catch (err) {
                 alert('Password verification failed. Please try again.');
                 fileInput.value = '';

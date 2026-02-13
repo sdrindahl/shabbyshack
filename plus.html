@@ -140,10 +140,46 @@
         </script>
 
     <script>
+        // Helper to get cached password if valid (within 5 minutes)
+        function getCachedPassword() {
+            const stored = localStorage.getItem('uploadPassword');
+            if (!stored) return null;
+            
+            try {
+                const { password, timestamp } = JSON.parse(stored);
+                const now = Date.now();
+                const ageMs = now - timestamp;
+                const fiveMinutesMs = 5 * 60 * 1000;
+                
+                if (ageMs < fiveMinutesMs) {
+                    return password;
+                } else {
+                    localStorage.removeItem('uploadPassword');
+                    return null;
+                }
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // Helper to cache password
+        function cachePassword(password) {
+            localStorage.setItem('uploadPassword', JSON.stringify({
+                password: password,
+                timestamp: Date.now()
+            }));
+        }
+        
         const fileInput = document.getElementById('fileInput');
         const uploadForm = document.getElementById('uploadForm');
         const uploadPassword = document.getElementById('uploadPassword');
         const addPhotosBtn = document.getElementById('addPhotosBtn');
+
+        // Pre-fill cached password on page load
+        const cachedPassword = getCachedPassword();
+        if (cachedPassword) {
+            uploadPassword.value = cachedPassword;
+        }
 
         addPhotosBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -183,6 +219,9 @@
                     fileInput.value = '';
                     return;
                 }
+                
+                // Cache the correct password
+                cachePassword(password);
             } catch (err) {
                 alert('Password verification failed. Please try again.');
                 fileInput.value = '';
