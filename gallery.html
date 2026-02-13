@@ -677,14 +677,29 @@
         const uploadForm = document.getElementById('uploadForm');
         const uploadPassword = document.getElementById('uploadPassword');
         const addPhotosBtn = document.getElementById('addPhotosBtn');
-        let verifiedPassword = false;
 
-        addPhotosBtn.addEventListener('click', async (e) => {
+        addPhotosBtn.addEventListener('click', (e) => {
             e.preventDefault();
+            // Direct click without async to work on mobile
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
+            if (files.length === 0) {
+                alert('Please select image files only.');
+                return;
+            }
+            if (files.length > 10) {
+                alert('You can upload up to 10 images at a time.');
+                files.splice(10);
+            }
+
+            // Verify password before upload
             const password = uploadPassword.value.trim();
-            
             if (!password) {
                 alert('Please enter the password.');
+                fileInput.value = '';
                 return;
             }
 
@@ -698,28 +713,13 @@
                 if (!verifyRes.ok) {
                     alert('Incorrect password. Please try again.');
                     uploadPassword.value = '';
+                    fileInput.value = '';
                     return;
                 }
-                
-                verifiedPassword = true;
-                fileInput.click();
             } catch (err) {
                 alert('Password verification failed. Please try again.');
+                fileInput.value = '';
                 return;
-            }
-        });
-
-        fileInput.addEventListener('change', async (e) => {
-            if (!verifiedPassword) return;
-            
-            const files = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
-            if (files.length === 0) {
-                alert('Please select image files only.');
-                return;
-            }
-            if (files.length > 10) {
-                alert('You can upload up to 10 images at a time.');
-                files.splice(10);
             }
 
             // Get login token
@@ -738,6 +738,7 @@
                 token = loginData.token;
             } catch (err) {
                 alert('Upload failed. Please try again.');
+                fileInput.value = '';
                 return;
             }
 
@@ -775,7 +776,6 @@
                             if (uploaded > 0) {
                                 alert(`Upload complete! ${uploaded} photo(s) uploaded. They will appear in the Gallery.`);
                                 uploadPassword.value = '';
-                                verifiedPassword = false;
                             } else {
                                 alert(`Upload failed. ${failed} photo(s) could not be uploaded.`);
                             }
