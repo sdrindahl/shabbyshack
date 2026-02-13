@@ -224,7 +224,8 @@
                     ${checkboxOverlay}
                     ${imgTag}
                     <div class="p-4">
-                        <p class="text-xs text-orange-400 mb-2">${story.created_at ? new Date(story.created_at).toLocaleString() : ''} | Shared Memory</p>
+                        <p class="text-xs text-orange-400 mb-2">${story.created_at ? new Date(story.created_at).toLocaleString() : ''}</p>
+                        <p class="text-xs text-gray-500 mb-3">${story.name ? story.name : 'Unknown Device'}</p>
                         <p class="text-gray-200 italic text-sm line-clamp-3">${story.text}</p>
                     </div>
                 `;
@@ -719,6 +720,30 @@
                 return null;
             }
         }
+        
+        // Helper to detect device/browser info
+        function getDeviceInfo() {
+            const ua = navigator.userAgent;
+            let browser = 'Unknown';
+            let os = 'Unknown';
+            
+            // Detect browser
+            if (ua.indexOf('Chrome') > -1 && ua.indexOf('Chromium') === -1) browser = 'Chrome';
+            else if (ua.indexOf('Safari') > -1 && ua.indexOf('Chrome') === -1) browser = 'Safari';
+            else if (ua.indexOf('Firefox') > -1) browser = 'Firefox';
+            else if (ua.indexOf('Edge') > -1 || ua.indexOf('Edg') > -1) browser = 'Edge';
+            else if (ua.indexOf('Opera') > -1 || ua.indexOf('OPR') > -1) browser = 'Opera';
+            
+            // Detect OS
+            if (ua.indexOf('Win') > -1) os = 'Windows';
+            else if (ua.indexOf('Mac') > -1) os = 'macOS';
+            else if (ua.indexOf('iPhone') > -1) os = 'iOS';
+            else if (ua.indexOf('iPad') > -1) os = 'iPadOS';
+            else if (ua.indexOf('Android') > -1) os = 'Android';
+            else if (ua.indexOf('Linux') > -1) os = 'Linux';
+            
+            return `${browser} on ${os}`;
+        }
 
         // Helper to cache password
         function cachePassword(password) {
@@ -801,7 +826,7 @@
                 return;
             }
 
-            const name = '';
+            const name = getDeviceInfo();
             const description = 'Uploaded photo';
             let uploaded = 0, failed = 0;
             let done = 0;
