@@ -219,7 +219,7 @@
                 // Checkbox overlay for deletion
                 const checkboxOverlay = `<div class="select-checkbox absolute top-2 left-2 z-20 hidden"><input type="checkbox" class="story-select-checkbox w-5 h-5 cursor-pointer" data-story-id="${story.id}" /></div>`;
                 
-                let imgTag = story.image ? `<div class='relative'><img src='${story.image}' alt='User Story Image' class='w-full h-56 object-cover rounded-t-xl border-b border-green-900'></div>` : '';
+                let imgTag = story.image ? `<div class='relative'><img src='${story.image}' alt='User Story Image' class='w-full h-56 object-cover rounded-t-xl border-b border-green-900' onerror='this.parentElement.style.display=\"none\"'></div>` : '';
                 article.innerHTML = `
                     ${checkboxOverlay}
                     ${imgTag}
@@ -231,6 +231,15 @@
                 article.classList.add('relative');
                 
                 grid.appendChild(article);
+                
+                // Add error handling for images
+                const img = article.querySelector('img');
+                if (img) {
+                    img.addEventListener('error', function(e) {
+                        console.error(`Failed to load image for story ${story.id}:`, story.image ? story.image.substring(0, 100) : 'no image data');
+                        this.parentElement.style.display = 'none';
+                    });
+                }
                 
                 // Checkbox event handler
                 const checkbox = article.querySelector('.story-select-checkbox');
