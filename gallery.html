@@ -797,6 +797,40 @@
             localStorage.removeItem('uploadPassword');
         }
         
+        // Helper to cache user name
+        function cacheName(name) {
+            localStorage.setItem('uploaderName', name);
+        }
+        
+        // Helper to get cached name
+        function getCachedName() {
+            return localStorage.getItem('uploaderName');
+        }
+        
+        // Helper to clear cached name
+        function clearCachedName() {
+            localStorage.removeItem('uploaderName');
+        }
+        
+        // Prompt for name if not cached
+        function promptForName() {
+            return new Promise((resolve) => {
+                const cachedName = getCachedName();
+                if (cachedName) {
+                    resolve(cachedName);
+                    return;
+                }
+                
+                const nameInput = prompt('What is your name?', '');
+                if (nameInput && nameInput.trim()) {
+                    cacheName(nameInput.trim());
+                    resolve(nameInput.trim());
+                } else {
+                    resolve('Anonymous');
+                }
+            });
+        }
+        
         // Upload Form Handling
         const fileInput = document.getElementById('fileInput');
         const uploadForm = document.getElementById('uploadForm');
@@ -844,6 +878,9 @@
                 
                 // Cache the correct password permanently
                 cachePassword(password);
+                
+                // Prompt for name if not already cached
+                const userName = await promptForName();
             } catch (err) {
                 alert('Password verification failed. Please try again.');
                 fileInput.value = '';
@@ -870,7 +907,7 @@
                 return;
             }
 
-            const name = getDeviceInfo();
+            const name = getCachedName() || 'Anonymous';
             const description = '';
             // Capture client-side timestamp as milliseconds since epoch
             const clientTimestamp = Date.now();
