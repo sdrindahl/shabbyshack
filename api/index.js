@@ -112,6 +112,36 @@ app.delete('/stories/:id', authenticateToken, (req, res) => {
   });
 });
 
+// Delete multiple stories with password verification
+app.post('/stories/delete-with-password', (req, res) => {
+  const { password, ids } = req.body;
+  
+  if (!password) {
+    return res.status(400).json({ error: 'Password required' });
+  }
+  
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ error: 'No stories selected' });
+  }
+  
+  // Verify password
+  if (password !== UPLOAD_PASSWORD) {
+    return res.status(401).json({ error: 'Invalid password' });
+  }
+  
+  // Delete all stories with provided IDs
+  const placeholders = ids.map(() => '?').join(',');
+  const query = `DELETE FROM stories WHERE id IN (${placeholders})`;
+  
+  db.run(query, ids, function(err) {
+    if (err) {
+      console.error('Error deleting stories:', err);
+      return res.status(500).json({ error: err.message });
+    }
+    res.json({ success: true, deleted: this.changes });
+  });
+});
+
 const PORT = process.env.PORT;
 console.log('process.env.PORT:', process.env.PORT);
 if (!PORT) {
