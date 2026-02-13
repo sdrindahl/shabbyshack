@@ -221,7 +221,7 @@ def create_story():
             text = data.get('text') or 'Uploaded photo'  # Ensure default if empty or None
             image = data.get('image', '')
             timestamp = data.get('timestamp', None)  # Client-provided timestamp
-            logger.info(f'JSON payload: name={name}, has_text={bool(text)}, image_size={len(image) if image else 0}, timestamp={timestamp}')
+            logger.info(f'JSON payload: name={name}, timestamp={timestamp}, type={type(timestamp).__name__}')
             if not image:
                 logger.warning('No image data in JSON payload')
                 return jsonify({'error': 'Image required'}), 400
@@ -234,7 +234,7 @@ def create_story():
             text = request.form.get('text') or 'Uploaded photo'  # Ensure default if empty or None
             timestamp = request.form.get('timestamp', None)  # Client-provided timestamp
             
-            logger.info(f'Parsed FormData: name={name}, text={text}, timestamp={timestamp}')
+            logger.info(f'Parsed FormData: name={name}, timestamp={timestamp}, type={type(timestamp).__name__}')
             
             if 'image' not in request.files:
                 logger.warning('No image file in FormData')
@@ -251,8 +251,6 @@ def create_story():
             image = f'data:{file.content_type};base64,' + base64.b64encode(file_data).decode('utf-8')
             logger.info(f'File received: {file.filename}, size: {len(file_data)} bytes')
         
-        logger.info(f'Story creation: name={name}, has_image={bool(image)}, image_size={len(image) if image else 0}')
-        
         if not image:
             logger.warning('No image data provided')
             return jsonify({'error': 'Image required'}), 400
@@ -261,13 +259,16 @@ def create_story():
         if not timestamp:
             import time
             timestamp = int(time.time() * 1000)  # Convert to milliseconds
+            logger.info(f'Using server timestamp: {timestamp}')
         else:
             # Ensure timestamp is an integer (milliseconds)
             try:
                 timestamp = int(timestamp)
+                logger.info(f'Using client timestamp: {timestamp}')
             except (ValueError, TypeError):
                 import time
                 timestamp = int(time.time() * 1000)  # Fallback to server time
+                logger.warning(f'Could not convert timestamp, using server time: {timestamp}')
         
         conn = get_db()
         c = conn.cursor()
@@ -275,7 +276,7 @@ def create_story():
         conn.commit()
         result_id = c.lastrowid
         conn.close()
-        logger.info(f'Story created successfully: id={result_id}')
+        logger.info(f'Story created: id={result_id}, stored_timestamp={timestamp}')
         return jsonify({'id': result_id})
     except Exception as e:
         logger.error(f'Failed to create story: {e}', exc_info=True)

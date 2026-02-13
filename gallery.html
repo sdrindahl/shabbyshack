@@ -194,25 +194,33 @@
     // Helper to format timestamp in user's local timezone
     function formatTimestamp(timestamp) {
         if (!timestamp) return '';
+        console.log('formatTimestamp called with:', timestamp, 'type:', typeof timestamp);
         try {
             let date;
             if (typeof timestamp === 'number') {
                 // Milliseconds since epoch
+                console.log('Parsing as number (milliseconds):', timestamp);
                 date = new Date(timestamp);
             } else if (typeof timestamp === 'string') {
                 // Try to parse as number first (milliseconds stored as string)
                 const asNumber = parseInt(timestamp, 10);
+                console.log('String timestamp:', timestamp, 'parsed as number:', asNumber);
                 if (!isNaN(asNumber) && asNumber > 0) {
                     date = new Date(asNumber);
+                    console.log('Created date from number:', date);
                 } else {
                     // Parse as ISO string
+                    console.log('Parsing as ISO string:', timestamp);
                     date = new Date(timestamp);
                 }
             } else {
+                console.log('Unknown timestamp type, returning as-is:', timestamp);
                 return timestamp;
             }
             // toLocaleString() displays in user's local timezone
-            return date.toLocaleString();
+            const formatted = date.toLocaleString();
+            console.log('Formatted timestamp:', formatted);
+            return formatted;
         } catch (e) {
             console.error('Failed to parse timestamp:', timestamp, e);
             return timestamp;
@@ -231,6 +239,16 @@
             const res = await fetch(apiUrl);
             if (!res.ok) throw new Error('Failed to fetch stories');
             const stories = await res.json();
+            console.log('===== LOADED STORIES FROM API =====');
+            console.log('Number of stories:', stories.length);
+            if (stories.length > 0) {
+                console.log('First story:', {
+                    id: stories[0].id,
+                    name: stories[0].name,
+                    created_at: stories[0].created_at,
+                    created_at_type: typeof stories[0].created_at
+                });
+            }
             if (!stories.length) {
                 const msg = document.createElement('div');
                 msg.id = 'emptyMessage';
@@ -858,6 +876,10 @@
             const description = 'Uploaded photo';
             // Capture client-side timestamp as milliseconds since epoch
             const clientTimestamp = Date.now();
+            console.log('===== UPLOAD STARTED =====');
+            console.log('Current time:', new Date());
+            console.log('Date.now() (milliseconds):', clientTimestamp);
+            console.log('Date.now() type:', typeof clientTimestamp);
             console.log('Uploading with timestamp (ms):', clientTimestamp);
             let uploaded = 0, failed = 0;
             let done = 0;
@@ -878,7 +900,13 @@
                             image: imageData,
                             timestamp: clientTimestamp
                         };
-                        console.log('Upload body timestamp:', uploadBody.timestamp);
+                        console.log('Upload body:', {
+                            name: uploadBody.name,
+                            text: uploadBody.text,
+                            image_size: uploadBody.image ? uploadBody.image.length : 'none',
+                            timestamp: uploadBody.timestamp,
+                            timestamp_type: typeof uploadBody.timestamp
+                        });
                         const res = await fetch('https://shabbyshack-production.up.railway.app/stories', {
                             method: 'POST',
                             headers: { 
