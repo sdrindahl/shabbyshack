@@ -224,7 +224,7 @@
                     ${checkboxOverlay}
                     ${imgTag}
                     <div class="p-4">
-                        <p class="text-xs text-orange-400 mb-2">${story.created_at ? new Date(story.created_at).toLocaleDateString() : ''} | Shared Memory</p>
+                        <p class="text-xs text-orange-400 mb-2">${story.created_at ? new Date(story.created_at).toLocaleString() : ''} | Shared Memory</p>
                         <p class="text-gray-200 italic text-sm line-clamp-3">${story.text}</p>
                     </div>
                 `;
