@@ -69,49 +69,60 @@ def init_db():
     try:
         logger.info(f'Initializing database at {DB_PATH}')
         
-        # Force delete old DATETIME-based database to ensure clean migration
-        if os.path.exists(DB_PATH):
-            try:
-                logger.info(f'Checking existing database schema at {DB_PATH}')
-                conn = sqlite3.connect(DB_PATH)
-                c = conn.cursor()
-                c.execute("PRAGMA table_info(stories)")
-                columns = {col[1]: col[2] for col in c.fetchall()}
-                conn.close()
-                
-                # If created_at is DATETIME, we need to delete and recreate
-                if 'created_at' in columns and 'INT' not in columns['created_at'].upper():
-                    logger.warning(f'Old schema detected (created_at is {columns["created_at"]}), deleting database')
-                    os.remove(DB_PATH)
-                    logger.info('Old database deleted, will recreate with new schema')
-            except Exception as e:
-                logger.warning(f'Could not check schema: {e}')
-        
         conn = get_db()
         c = conn.cursor()
+        
+        # STEP 1: Check if stories table exists with OLD schema
+        c.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='stories'")
+        existing_sql = c.fetchone()
+        
+        if existing_sql:
+            create_sql_str = str(existing_sql[0]).upper()
+            logger.warning(f'Existing stories table found. SQL: {existing_sql[0]}')
+            
+            # If it has DATETIME or TEXT for created_at, DROP and recreate
+            if 'DATETIME' in create_sql_str or ('CREATED_AT' in create_sql_str and 'TEXT' in create_sql_str):
+                logger.warning('OLD SCHEMA DETECTED! Dropping stories table...')
+                c.execute('DROP TABLE IF EXISTS stories')
+                conn.commit()
+                logger.warning('Stories table dropped. Will recreate with INTEGER schema.')
+                existing_sql = None
+        
+        # STEP 2: Create users table
         c.execute('''CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE,
             password TEXT
         )''')
         
-        # Create stories table with INTEGER timestamps (milliseconds)
-        c.execute('''CREATE TABLE IF NOT EXISTS stories (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            text TEXT,
-            image TEXT,
-            created_at INTEGER DEFAULT 0
-        )''')
+        # STEP 3: Create stories table with INTEGER timestamps
+        if not existing_sql:
+            logger.info('Creating new stories table with INTEGER timestamps')
+            c.execute('''CREATE TABLE IF NOT EXISTS stories (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT,
+                text TEXT,
+                image TEXT,
+                created_at INTEGER NOT NULL DEFAULT 0
+            )''')
+            
+            # Verify the schema
+            c.execute("PRAGMA table_info(stories)")
+            columns = c.fetchall()
+            logger.info('=== NEW STORIES TABLE SCHEMA ===')
+            for col in columns:
+                logger.info(f'  Column {col[1]}: Type={col[2]}, NotNull={col[3]}, Default={col[4]}')
         
+        # STEP 4: Create admin user
         c.execute('SELECT * FROM users WHERE username = ?', ('admin',))
         if not c.fetchone():
             logger.info('Creating default admin user')
             hash_pw = bcrypt.hashpw('admin'.encode(), bcrypt.gensalt())
             c.execute('INSERT INTO users (username, password) VALUES (?, ?)', ('admin', hash_pw))
+        
         conn.commit()
         conn.close()
-        logger.info('Database initialized successfully with INTEGER timestamps')
+        logger.info('=== DATABASE INITIALIZATION COMPLETE ===')
     except Exception as e:
         logger.error(f'Database initialization failed: {e}', exc_info=True)
         raise
