@@ -759,24 +759,7 @@
         
         // Helper to get cached password if valid (within 5 minutes)
         function getCachedPassword() {
-            const stored = localStorage.getItem('uploadPassword');
-            if (!stored) return null;
-            
-            try {
-                const { password, timestamp } = JSON.parse(stored);
-                const now = Date.now();
-                const ageMs = now - timestamp;
-                const fiveMinutesMs = 5 * 60 * 1000;
-                
-                if (ageMs < fiveMinutesMs) {
-                    return password;
-                } else {
-                    localStorage.removeItem('uploadPassword');
-                    return null;
-                }
-            } catch (e) {
-                return null;
-            }
+            return localStorage.getItem('uploadPassword');
         }
         
         // Helper to detect device/browser info
@@ -804,12 +787,14 @@
             return `${browser} on ${os}`;
         }
         
-        // Helper to cache password
+        // Helper to cache password (permanently until cleared)
         function cachePassword(password) {
-            localStorage.setItem('uploadPassword', JSON.stringify({
-                password: password,
-                timestamp: Date.now()
-            }));
+            localStorage.setItem('uploadPassword', password);
+        }
+        
+        // Helper to clear cached password
+        function clearCachedPassword() {
+            localStorage.removeItem('uploadPassword');
         }
         
         // Upload Form Handling
@@ -857,7 +842,7 @@
                     return;
                 }
                 
-                // Cache the correct password
+                // Cache the correct password permanently
                 cachePassword(password);
             } catch (err) {
                 alert('Password verification failed. Please try again.');
