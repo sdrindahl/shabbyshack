@@ -283,7 +283,7 @@
                     ${imgTag}
                     <div class="p-4">
                         <p class="text-xs text-orange-400 mb-2">${story.created_at ? formatTimestamp(story.created_at) : ''}</p>
-                        <p class="text-xs text-gray-500 mb-3">${story.name ? story.name : 'Unknown Device'}</p>
+                        <p class="text-xs text-gray-500 mb-3">Uploaded by ${story.name ? story.name : 'Unknown Device'}</p>
                         <p class="text-gray-200 italic text-sm line-clamp-3">${story.text}</p>
                     </div>
                 `;
