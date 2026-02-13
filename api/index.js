@@ -27,7 +27,7 @@ db.serialize(() => {
     name TEXT,
     text TEXT,
     image TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at INTEGER NOT NULL DEFAULT 0
   )`);
   // Create default admin if not exists
   db.get('SELECT * FROM users WHERE username = ?', ['admin'], (err, row) => {
@@ -89,12 +89,19 @@ app.get('/stories', (req, res) => {
 });
 
 app.post('/stories', authenticateToken, (req, res) => {
-  const { name, text, image } = req.body;
+  const { name, text, image, timestamp } = req.body;
   if (!text) return res.status(400).json({ error: 'Text required' });
-  db.run('INSERT INTO stories (name, text, image) VALUES (?, ?, ?)', [name || 'Anonymous', text, image || ''], function(err) {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ id: this.lastID });
-  });
+  
+  // Use client timestamp if provided, otherwise use server time in milliseconds
+  const createdAt = timestamp ? parseInt(timestamp, 10) : Date.now();
+  
+  db.run('INSERT INTO stories (name, text, image, created_at) VALUES (?, ?, ?, ?)', 
+    [name || 'Anonymous', text, image || '', createdAt], 
+    function(err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ id: this.lastID });
+    }
+  );
 });
 
 app.put('/stories/:id', authenticateToken, (req, res) => {

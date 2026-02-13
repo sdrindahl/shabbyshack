@@ -44,10 +44,11 @@ def ensure_db_initialized():
         # Don't crash - try again on next request
 
 # Use /tmp for Railway, current dir otherwise
+# NOTE: Changed filename to force fresh database (old datetime schema was corrupting new data)
 if os.path.exists('/tmp'):
-    DB_PATH = '/tmp/stories.db'
+    DB_PATH = '/tmp/stories_v2.db'  # Changed from stories.db to avoid old schema
 else:
-    DB_PATH = './stories.db'
+    DB_PATH = './stories_v2.db'
 
 logger.info(f'Database path: {DB_PATH}')
 
@@ -69,66 +70,43 @@ def init_db():
     try:
         logger.info(f'Initializing database at {DB_PATH}')
         
-        # FORCE CHECK: If database exists with wrong schema, DELETE THE ENTIRE FILE
-        if os.path.exists(DB_PATH):
-            logger.warning(f'Database file exists at {DB_PATH}')
-            needs_deletion = False
-            
+        # Check for FORCE_RESET environment variable (Railway users can set this)
+        force_reset = os.environ.get('FORCE_DB_RESET', '').lower() == 'true'
+        if force_reset:
+            logger.critical('🔥 FORCE_DB_RESET=true detected! Deleting entire database.')
+            if os.path.exists(DB_PATH):
+                os.remove(DB_PATH)
+                logger.critical(f'Deleted {DB_PATH}')
+        
+        # Check if existing database has wrong schema
+        elif os.path.exists(DB_PATH):
+            logger.warning(f'Checking existing database at {DB_PATH}')
             try:
                 conn = sqlite3.connect(DB_PATH)
                 c = conn.cursor()
-                
-                # Try to get the actual CREATE TABLE statement
                 c.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='stories'")
                 result = c.fetchone()
                 
-                if result:
-                    create_sql = result[0].upper()
-                    logger.warning(f'Existing CREATE TABLE found')
-                    
-                    # If it's DATETIME, the whole database needs to go
-                    if 'DATETIME' in create_sql:
-                        logger.critical('⚠️ DATETIME column detected! File will be deleted.')
-                        needs_deletion = True
-                    else:
-                        # Double-check the actual column type
-                        c.execute("PRAGMA table_info(stories)")
-                        cols = {col[1]: col[2] for col in c.fetchall()}
-                        actual_type = cols.get('created_at', 'UNKNOWN').upper()
-                        logger.warning(f'Actual created_at column type: {actual_type}')
-                        
-                        if actual_type != 'INTEGER':
-                            logger.critical(f'⚠️ Wrong column type: {actual_type}! File will be deleted.')
-                            needs_deletion = True
-                        else:
-                            logger.info('✓ Schema is already correct (INTEGER)')
-                
-                conn.close()
-            except Exception as e:
-                logger.error(f'Error reading schema: {e}')
-                needs_deletion = True
-            
-            # ACTUALLY DELETE THE FILE if needed
-            if needs_deletion:
-                try:
+                if result and 'DATETIME' in result[0].upper():
+                    logger.critical('DATETIME schema detected! Deleting database.')
+                    conn.close()
                     os.remove(DB_PATH)
-                    logger.critical(f'🗑️  DELETED database file: {DB_PATH}')
-                except Exception as delete_error:
-                    logger.error(f'Failed to delete database: {delete_error}')
+                    logger.critical(f'Deleted {DB_PATH}')
+                else:
+                    conn.close()
+            except Exception as e:
+                logger.error(f'Error checking schema: {e}')
         
-        # Create fresh database with correct schema
-        logger.info('Creating database with correct schema...')
+        # Create fresh database
         conn = get_db()
         c = conn.cursor()
         
-        # Create users table
         c.execute('''CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE,
             password TEXT
         )''')
         
-        # Create stories table - ALWAYS INTEGER for timestamps
         c.execute('''CREATE TABLE IF NOT EXISTS stories (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
@@ -137,28 +115,29 @@ def init_db():
             created_at INTEGER NOT NULL DEFAULT 0
         )''')
         
-        # VERIFY the schema is exactly what we want
+        # Verify schema
         c.execute("PRAGMA table_info(stories)")
-        schema_check = c.fetchall()
-        logger.critical('=== FINAL DATABASE SCHEMA ===')
-        for col in schema_check:
-            col_id, col_name, col_type, col_notnull, col_default, col_pk = col
-            logger.critical(f'  {col_name}: type={col_type}, notnull={col_notnull}, default={col_default}')
-            if col_name == 'created_at' and col_type != 'INTEGER':
-                raise Exception(f'SCHEMA VERIFICATION FAILED: created_at is {col_type}, not INTEGER!')
+        created_at_type = None
+        for col in c.fetchall():
+            if col[1] == 'created_at':
+                created_at_type = col[2]
+        
+        logger.critical(f'Created stories table with created_at type: {created_at_type}')
+        if created_at_type != 'INTEGER':
+            raise Exception(f'CRITICAL: created_at is {created_at_type}, not INTEGER!')
         
         # Create admin user
         c.execute('SELECT * FROM users WHERE username = ?', ('admin',))
         if not c.fetchone():
-            logger.info('Creating default admin user')
+            logger.info('Creating admin user')
             hash_pw = bcrypt.hashpw('admin'.encode(), bcrypt.gensalt())
             c.execute('INSERT INTO users (username, password) VALUES (?, ?)', ('admin', hash_pw))
         
         conn.commit()
         conn.close()
-        logger.critical('=== ✅ DATABASE INITIALIZATION COMPLETE - SCHEMA VERIFIED ===')
+        logger.critical('✅ DATABASE READY (INTEGER timestamps)')
     except Exception as e:
-        logger.critical(f'❌ DATABASE INITIALIZATION FAILED: {e}', exc_info=True)
+        logger.critical(f'❌ DATABASE INIT FAILED: {e}', exc_info=True)
         raise
 
 def authenticate_token(f):
