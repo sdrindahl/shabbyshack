@@ -129,6 +129,10 @@ def ping():
         logger.warning(f'Health check DB error: {e}')
         return jsonify({'message': 'pong', 'db': 'error', 'error': str(e)}), 200
 
+@app.route('/test-new-route', methods=['GET'])
+def test_new_route():
+    return jsonify({'message': 'New route working - code deployed!'}), 200
+
 # Auth route
 @app.route('/auth/login', methods=['POST'])
 def login():
