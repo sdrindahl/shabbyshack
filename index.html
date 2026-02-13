@@ -142,33 +142,18 @@
     <div id="uploadModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 hidden">
         <div class="bg-[#101014] rounded-lg shadow-xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto relative">
             <button id="closeUploadModalBtn" class="absolute top-4 right-4 text-gray-400 hover:text-orange-500 text-2xl font-bold">&times;</button>
-            <h2 class="text-3xl font-bold mb-4 text-orange-500">Upload Photos</h2>
-            <p class="text-gray-300 mb-6">Share your hunting memories and wildlife photos.</p>
+            <p class="text-lg text-gray-300">Enter Password to upload Photos</p>
             
-            <form id="uploadForm" class="space-y-6">
+            <form id="uploadForm" class="space-y-6 mt-6">
                 <div>
-                    <label for="uploadPassword" class="block text-gray-300 font-semibold mb-2">Upload Password</label>
-                    <input type="password" id="uploadPassword" class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500" placeholder="Enter upload password" required>
+                    <input type="password" id="uploadPassword" class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500" placeholder="Password" required>
                 </div>
-
-                <div class="border-2 border-dashed border-orange-500 rounded-lg p-8 cursor-pointer hover:bg-gray-800/50 transition" id="dropZone">
-                    <input type="file" id="fileInput" name="file" accept="image/*" multiple hidden>
-                    <svg class="w-12 h-12 mx-auto text-orange-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                    </svg>
-                    <p class="text-sm text-gray-500 mt-2">PNG, JPG, GIF up to 10MB each</p>
-                </div>
-
                 <div class="text-center">
-                    <button type="submit" class="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-10 rounded-full transition duration-300 uppercase tracking-widest">Upload Photos</button>
+                    <button type="button" id="addPhotosBtn" class="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-10 rounded-full transition duration-300 uppercase tracking-widest">Add Photos</button>
                 </div>
             </form>
 
-            <!-- Preview section -->
-            <div id="previewContainer" class="hidden mt-8 pt-8 border-t border-gray-700">
-                <h3 class="text-2xl font-bold text-orange-500 mb-6">Preview</h3>
-                <div id="previewGrid" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
-            </div>
+            <input type="file" id="fileInput" name="file" accept="image/*" multiple hidden>
         </div>
     </div>
 
@@ -206,77 +191,18 @@
         });
         
         // Upload Form Handling
-        const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
         const uploadForm = document.getElementById('uploadForm');
         const uploadPassword = document.getElementById('uploadPassword');
-        const previewContainer = document.getElementById('previewContainer');
-        const previewGrid = document.getElementById('previewGrid');
-        let selectedFiles = [];
+        const addPhotosBtn = document.getElementById('addPhotosBtn');
+        let verifiedPassword = false;
 
-        dropZone.addEventListener('click', () => fileInput.click());
-
-        dropZone.addEventListener('dragover', (e) => {
+        addPhotosBtn.addEventListener('click', async (e) => {
             e.preventDefault();
-            dropZone.classList.add('bg-gray-800/50');
-        });
-
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('bg-gray-800/50');
-        });
-
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('bg-gray-800/50');
-            handleFiles(e.dataTransfer.files);
-        });
-
-        fileInput.addEventListener('change', (e) => {
-            handleFiles(e.target.files);
-        });
-
-        function handleFiles(files) {
-            selectedFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
-            if (selectedFiles.length === 0) {
-                alert('Please select image files only.');
-                return;
-            }
-            if (selectedFiles.length > 10) {
-                alert('You can upload up to 10 images at a time.');
-                selectedFiles = selectedFiles.slice(0, 10);
-            }
-            displayPreviews();
-        }
-
-        function displayPreviews() {
-            previewGrid.innerHTML = '';
-            selectedFiles.forEach(file => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const div = document.createElement('div');
-                    div.className = 'relative rounded-lg overflow-hidden shadow-lg';
-                    div.innerHTML = `
-                        <img src="${e.target.result}" alt="Preview" class="w-full h-48 object-cover">
-                        <p class="text-xs text-gray-400 p-2 bg-gray-900/80 truncate">${file.name}</p>
-                    `;
-                    previewGrid.appendChild(div);
-                };
-                reader.readAsDataURL(file);
-            });
-            previewContainer.classList.remove('hidden');
-        }
-
-        uploadForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
             const password = uploadPassword.value.trim();
+            
             if (!password) {
-                alert('Please enter the upload password.');
-                return;
-            }
-
-            if (selectedFiles.length === 0) {
-                alert('Please select at least one image to upload.');
+                alert('Please enter the password.');
                 return;
             }
 
@@ -286,16 +212,35 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ password })
                 });
+                
                 if (!verifyRes.ok) {
                     alert('Incorrect password. Please try again.');
                     uploadPassword.value = '';
                     return;
                 }
+                
+                verifiedPassword = true;
+                fileInput.click();
             } catch (err) {
                 alert('Password verification failed. Please try again.');
                 return;
             }
+        });
 
+        fileInput.addEventListener('change', async (e) => {
+            if (!verifiedPassword) return;
+            
+            const files = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
+            if (files.length === 0) {
+                alert('Please select image files only.');
+                return;
+            }
+            if (files.length > 10) {
+                alert('You can upload up to 10 images at a time.');
+                files.splice(10);
+            }
+
+            // Get login token
             let token = '';
             try {
                 const loginRes = await fetch('https://shabbyshack-production.up.railway.app/auth/login', {
@@ -319,7 +264,7 @@
             let uploaded = 0, failed = 0;
             let done = 0;
             
-            selectedFiles.forEach(file => {
+            files.forEach(file => {
                 const reader = new FileReader();
                 reader.onload = async (e) => {
                     const imageData = e.target.result;
@@ -344,17 +289,16 @@
                         failed++;
                     } finally {
                         done++;
-                        if (done === selectedFiles.length) {
+                        if (done === files.length) {
                             if (uploaded > 0) {
                                 alert(`Upload complete! ${uploaded} photo(s) uploaded. They will appear in the Gallery.`);
                                 uploadPassword.value = '';
+                                verifiedPassword = false;
                             } else {
                                 alert(`Upload failed. ${failed} photo(s) could not be uploaded.`);
                             }
                             uploadForm.reset();
                             fileInput.value = '';
-                            selectedFiles = [];
-                            previewContainer.classList.add('hidden');
                             closeUploadModal();
                         }
                     }
