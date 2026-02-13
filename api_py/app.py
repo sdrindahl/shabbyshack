@@ -208,13 +208,25 @@ def get_stories():
         ensure_db_initialized()
         conn = get_db()
         c = conn.cursor()
+        
+        # Debug: log the actual schema
+        c.execute("PRAGMA table_info(stories)")
+        schema = c.fetchall()
+        logger.info(f'Stories table schema:')
+        for col in schema:
+            logger.info(f'  Column: {col[1]}, Type: {col[2]}')
+        
         c.execute('SELECT * FROM stories ORDER BY created_at DESC')
         rows = c.fetchall()
         stories = [dict(row) for row in rows]
         
         logger.info(f'Retrieved {len(stories)} stories from database')
         if stories:
-            logger.info(f'First story created_at: {repr(stories[0].get("created_at"))} (type: {type(stories[0].get("created_at")).__name__})')
+            first_ts = stories[0].get("created_at")
+            logger.info(f'First story created_at: {repr(first_ts)} (type: {type(first_ts).__name__})')
+            
+            # Log a few more details
+            logger.info(f'First story full: id={stories[0].get("id")}, name={stories[0].get("name")}, created_at_value={first_ts}')
         
         return jsonify(stories)
     except Exception as e:
