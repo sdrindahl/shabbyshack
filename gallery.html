@@ -880,7 +880,14 @@
                 cachePassword(password);
                 
                 // Prompt for name if not already cached
-                const userName = await promptForName();
+                if (!getCachedName()) {
+                    const nameInput = prompt('What is your name?');
+                    if (nameInput && nameInput.trim()) {
+                        cacheName(nameInput.trim());
+                    } else {
+                        cacheName('Anonymous');
+                    }
+                }
             } catch (err) {
                 alert('Password verification failed. Please try again.');
                 fileInput.value = '';
