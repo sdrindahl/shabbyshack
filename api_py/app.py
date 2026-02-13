@@ -75,13 +75,86 @@ def init_db():
             username TEXT UNIQUE,
             password TEXT
         )''')
-        c.execute('''CREATE TABLE IF NOT EXISTS stories (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            text TEXT,
-            image TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )''')
+        
+        # Check if stories table exists
+        c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='stories'")
+        table_exists = c.fetchone()
+        
+        if not table_exists:
+            # Create new stories table with INTEGER timestamp (milliseconds)
+            logger.info('Creating new stories table with INTEGER created_at')
+            c.execute('''CREATE TABLE IF NOT EXISTS stories (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT,
+                text TEXT,
+                image TEXT,
+                created_at INTEGER DEFAULT 0
+            )''')
+        else:
+            # Check if created_at is DATETIME (old schema)
+            c.execute("PRAGMA table_info(stories)")
+            columns = c.fetchall()
+            created_at_col = next((col for col in columns if col[1] == 'created_at'), None)
+            
+            if created_at_col and 'INT' not in created_at_col[2].upper():
+                logger.info(f'Migrating stories table: created_at is {created_at_col[2]}, converting to INTEGER')
+                try:
+                    # Rename old table
+                    c.execute('ALTER TABLE stories RENAME TO stories_old')
+                    
+                    # Create new table with INTEGER timestamps
+                    c.execute('''CREATE TABLE stories (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        name TEXT,
+                        text TEXT,
+                        image TEXT,
+                        created_at INTEGER DEFAULT 0
+                    )''')
+                    
+                    # Migrate data: parse datetime strings to milliseconds
+                    c.execute('SELECT id, name, text, image, created_at FROM stories_old')
+                    old_stories = c.fetchall()
+                    
+                    for story in old_stories:
+                        story_id, name, text, image, created_at = story
+                        timestamp_ms = 0  # default
+                        
+                        # Try to convert the old format to milliseconds
+                        if created_at:
+                            try:
+                                # If it's a numeric string or number
+                                if isinstance(created_at, (int, float)):
+                                    ts_num = int(created_at)
+                                    if ts_num > 100000000000:  # Looks like milliseconds
+                                        timestamp_ms = ts_num
+                                    elif ts_num > 1000000000:  # Looks like seconds
+                                        timestamp_ms = ts_num * 1000
+                                elif isinstance(created_at, str):
+                                    # Try parsing as datetime string
+                                    dt = datetime.strptime(created_at, '%Y-%m-%d %H:%M:%S')
+                                    timestamp_ms = int(dt.timestamp() * 1000)
+                            except:
+                                logger.warning(f'Could not convert timestamp for story {story_id}: {created_at}')
+                                timestamp_ms = 0
+                        
+                        c.execute(
+                            'INSERT INTO stories (id, name, text, image, created_at) VALUES (?, ?, ?, ?, ?)',
+                            (story_id, name, text, image, timestamp_ms)
+                        )
+                    
+                    # Drop old table
+                    c.execute('DROP TABLE stories_old')
+                    logger.info('Migration completed successfully')
+                except Exception as migration_error:
+                    logger.error(f'Migration failed: {migration_error}', exc_info=True)
+                    # Try to recover
+                    try:
+                        c.execute('DROP TABLE IF EXISTS stories')
+                        c.execute('ALTER TABLE IF EXISTS stories_old RENAME TO stories')
+                    except:
+                        pass
+                    raise
+        
         c.execute('SELECT * FROM users WHERE username = ?', ('admin',))
         if not c.fetchone():
             logger.info('Creating default admin user')
@@ -191,61 +264,9 @@ def get_stories():
         stories = [dict(row) for row in rows]
         
         logger.info(f'Retrieved {len(stories)} stories from database')
-        
-        # Ensure timestamps are returned as integers (milliseconds)
-        for idx, story in enumerate(stories):
-            created_at = story.get('created_at')
-            logger.info(f'Story {idx}: raw created_at = {repr(created_at)}, type = {type(created_at).__name__}')
-            
-            if not created_at:
-                logger.info(f'Story {idx}: no created_at, skipping')
-                continue
-            
-            # If already an integer in milliseconds range, keep as-is
-            if isinstance(created_at, int):
-                if created_at > 1000000000000:  # Milliseconds range
-                    logger.info(f'Story {idx}: already int milliseconds: {created_at}')
-                    continue
-            
-            # Handle string timestamps (both numeric and datetime)
-            if isinstance(created_at, str):
-                # Try numeric string first
-                if created_at.replace('.', '', 1).replace('-', '', 1).isdigit():
-                    try:
-                        ms = int(float(created_at))
-                        if ms > 100000000000:
-                            story['created_at'] = ms
-                            logger.info(f'Story {idx}: converted numeric string to ms: {ms}')
-                            continue
-                    except (ValueError, TypeError):
-                        pass
-                
-                # Parse as SQLite datetime: YYYY-MM-DD HH:MM:SS
-                if '-' in created_at and ' ' in created_at and ':' in created_at:
-                    try:
-                        logger.info(f'Story {idx}: attempting datetime parse of: {created_at}')
-                        dt = datetime.strptime(created_at, '%Y-%m-%d %H:%M:%S')
-                        # Convert to milliseconds (dt.timestamp() gives seconds in epoch)
-                        timestamp_ms = int(dt.timestamp() * 1000)
-                        story['created_at'] = timestamp_ms
-                        logger.info(f'Story {idx}: parsed datetime {created_at} -> {timestamp_ms} ms')
-                        continue
-                    except Exception as e:
-                        logger.error(f'Story {idx}: failed to parse datetime {created_at}: {e}')
-                        # Don't return as string - return something testable
-                        story['created_at'] = 0
-                        continue
-            
-            logger.warning(f'Story {idx}: could not convert {repr(created_at)}, setting to 0')
-            story['created_at'] = 0
-        
-        logger.info(f'Returning {len(stories)} stories with converted timestamps')
-        
-        # Debug: log first story's timestamp before returning
         if stories:
-            logger.info(f'First story after conversion: {stories[0]}')
+            logger.info(f'First story created_at: {repr(stories[0].get("created_at"))} (type: {type(stories[0].get("created_at")).__name__})')
         
-        conn.close()
         return jsonify(stories)
     except Exception as e:
         logger.error(f'Get stories error: {e}', exc_info=True)

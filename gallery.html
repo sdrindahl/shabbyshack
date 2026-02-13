@@ -193,34 +193,23 @@
 
     // Helper to format timestamp in user's local timezone
     function formatTimestamp(timestamp) {
-        if (!timestamp) return '';
+        if (!timestamp && timestamp !== 0) return '';
         console.log('formatTimestamp called with:', timestamp, 'type:', typeof timestamp);
         try {
             let date;
+            
             if (typeof timestamp === 'number') {
-                // Milliseconds since epoch
+                // Milliseconds since epoch (direct from storage)
                 console.log('Parsing as number (milliseconds):', timestamp);
                 date = new Date(timestamp);
             } else if (typeof timestamp === 'string') {
-                // Check if it's a pure numeric string (possibly milliseconds stored as string)
-                if (/^\d+$/.test(timestamp.trim())) {
-                    const asNumber = parseInt(timestamp.trim(), 10);
-                    console.log('String timestamp is pure numeric:', timestamp, 'parsed as:', asNumber);
-                    if (asNumber > 1000000000000) {  // Valid milliseconds range
-                        date = new Date(asNumber);
-                        console.log('Created date from numeric string:', date);
-                    } else {
-                        console.log('Numeric string too small for milliseconds, treating as invalid');
-                        return timestamp;
-                    }
-                } else if (timestamp.includes('-') && timestamp.includes(':')) {
-                    // Looks like a datetime string (YYYY-MM-DD HH:MM:SS)
-                    console.log('Parsing as datetime string:', timestamp);
-                    date = new Date(timestamp);
-                    console.log('Created date from datetime string:', date);
+                // Fallback for string numbers
+                const asNumber = parseInt(timestamp, 10);
+                if (!isNaN(asNumber) && asNumber > 1000000000000) {
+                    console.log('Parsing string as milliseconds:', timestamp, '->', asNumber);
+                    date = new Date(asNumber);
                 } else {
-                    // Try ISO string or other format
-                    console.log('Trying to parse as ISO or other format:', timestamp);
+                    console.log('String too small for milliseconds, trying ISO or datetime format:', timestamp);
                     date = new Date(timestamp);
                 }
             } else {
@@ -235,7 +224,7 @@
             
             // toLocaleString() displays in user's local timezone
             const formatted = date.toLocaleString();
-            console.log('Formatted timestamp:', formatted);
+            console.log('Formatted to:', formatted);
             return formatted;
         } catch (e) {
             console.error('Failed to parse timestamp:', timestamp, e);
