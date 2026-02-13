@@ -202,21 +202,37 @@
                 console.log('Parsing as number (milliseconds):', timestamp);
                 date = new Date(timestamp);
             } else if (typeof timestamp === 'string') {
-                // Try to parse as number first (milliseconds stored as string)
-                const asNumber = parseInt(timestamp, 10);
-                console.log('String timestamp:', timestamp, 'parsed as number:', asNumber);
-                if (!isNaN(asNumber) && asNumber > 0) {
-                    date = new Date(asNumber);
-                    console.log('Created date from number:', date);
+                // Check if it's a pure numeric string (possibly milliseconds stored as string)
+                if (/^\d+$/.test(timestamp.trim())) {
+                    const asNumber = parseInt(timestamp.trim(), 10);
+                    console.log('String timestamp is pure numeric:', timestamp, 'parsed as:', asNumber);
+                    if (asNumber > 1000000000000) {  // Valid milliseconds range
+                        date = new Date(asNumber);
+                        console.log('Created date from numeric string:', date);
+                    } else {
+                        console.log('Numeric string too small for milliseconds, treating as invalid');
+                        return timestamp;
+                    }
+                } else if (timestamp.includes('-') && timestamp.includes(':')) {
+                    // Looks like a datetime string (YYYY-MM-DD HH:MM:SS)
+                    console.log('Parsing as datetime string:', timestamp);
+                    date = new Date(timestamp);
+                    console.log('Created date from datetime string:', date);
                 } else {
-                    // Parse as ISO string
-                    console.log('Parsing as ISO string:', timestamp);
+                    // Try ISO string or other format
+                    console.log('Trying to parse as ISO or other format:', timestamp);
                     date = new Date(timestamp);
                 }
             } else {
                 console.log('Unknown timestamp type, returning as-is:', timestamp);
                 return timestamp;
             }
+            
+            if (isNaN(date.getTime())) {
+                console.error('Invalid date after parsing:', timestamp);
+                return timestamp;
+            }
+            
             // toLocaleString() displays in user's local timezone
             const formatted = date.toLocaleString();
             console.log('Formatted timestamp:', formatted);
