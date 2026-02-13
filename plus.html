@@ -278,8 +278,8 @@
             let uploaded = 0, failed = 0;
             let done = 0;
             
-            // Capture client-side timestamp in ISO format
-            const clientTimestamp = new Date().toISOString();
+            // Capture client-side timestamp as milliseconds since epoch
+            const clientTimestamp = Date.now();
             
             // Show uploading message
             uploadForm.classList.add('hidden');

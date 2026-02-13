@@ -189,6 +189,16 @@ def get_stories():
         c.execute('SELECT * FROM stories ORDER BY created_at DESC')
         rows = c.fetchall()
         stories = [dict(row) for row in rows]
+        
+        # Ensure timestamps are in proper format for JavaScript
+        for story in stories:
+            if story.get('created_at'):
+                created_at = story['created_at']
+                # If it's a numeric string (milliseconds), convert to number
+                if isinstance(created_at, str) and created_at.isdigit():
+                    story['created_at'] = int(created_at)
+                # If it's not already ISO format with T, leave as-is (will be numeric)
+        
         conn.close()
         return jsonify(stories)
     except Exception as e:
@@ -247,9 +257,17 @@ def create_story():
             logger.warning('No image data provided')
             return jsonify({'error': 'Image required'}), 400
         
-        # Use client timestamp if provided, otherwise use server time
+        # Use client timestamp if provided, otherwise use server time (in milliseconds)
         if not timestamp:
-            timestamp = datetime.utcnow().isoformat() + 'Z'
+            import time
+            timestamp = int(time.time() * 1000)  # Convert to milliseconds
+        else:
+            # Ensure timestamp is an integer (milliseconds)
+            try:
+                timestamp = int(timestamp)
+            except (ValueError, TypeError):
+                import time
+                timestamp = int(time.time() * 1000)  # Fallback to server time
         
         conn = get_db()
         c = conn.cursor()

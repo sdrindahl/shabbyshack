@@ -192,16 +192,30 @@
     }
 
     // Helper to format timestamp in user's local timezone
-    function formatTimestamp(isoString) {
-        if (!isoString) return '';
+    function formatTimestamp(timestamp) {
+        if (!timestamp) return '';
         try {
-            // Parse the ISO string - JavaScript will automatically handle Z (UTC) designation
-            const date = new Date(isoString);
-            // toLocaleString() converts UTC time to user's local timezone
+            let date;
+            if (typeof timestamp === 'number') {
+                // Milliseconds since epoch
+                date = new Date(timestamp);
+            } else if (typeof timestamp === 'string') {
+                // Try to parse as number first (milliseconds stored as string)
+                const asNumber = parseInt(timestamp, 10);
+                if (!isNaN(asNumber) && asNumber > 0) {
+                    date = new Date(asNumber);
+                } else {
+                    // Parse as ISO string
+                    date = new Date(timestamp);
+                }
+            } else {
+                return timestamp;
+            }
+            // toLocaleString() displays in user's local timezone
             return date.toLocaleString();
         } catch (e) {
-            console.error('Failed to parse timestamp:', isoString, e);
-            return isoString;
+            console.error('Failed to parse timestamp:', timestamp, e);
+            return timestamp;
         }
     }
 
@@ -842,9 +856,9 @@
 
             const name = getDeviceInfo();
             const description = 'Uploaded photo';
-            // Capture client-side timestamp in ISO format
-            const clientTimestamp = new Date().toISOString();
-            console.log('Uploading with timestamp:', clientTimestamp);
+            // Capture client-side timestamp as milliseconds since epoch
+            const clientTimestamp = Date.now();
+            console.log('Uploading with timestamp (ms):', clientTimestamp);
             let uploaded = 0, failed = 0;
             let done = 0;
             
