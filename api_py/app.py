@@ -184,6 +184,7 @@ def verify_upload_password():
 def get_stories():
     try:
         ensure_db_initialized()
+        import time
         conn = get_db()
         c = conn.cursor()
         c.execute('SELECT * FROM stories ORDER BY created_at DESC')
@@ -194,41 +195,44 @@ def get_stories():
         for story in stories:
             if story.get('created_at'):
                 created_at = story['created_at']
-                logger.info(f'Processing timestamp: {created_at} (type: {type(created_at).__name__})')
+                logger.info(f'Raw created_at from DB: {repr(created_at)} (type: {type(created_at).__name__})')
                 
-                # If already an integer, leave as-is
+                # If already an integer and in reasonable range, it's milliseconds
                 if isinstance(created_at, int):
-                    logger.info(f'Timestamp is already int: {created_at}')
+                    logger.info(f'Already integer: {created_at}')
                     continue
                 
-                # If it's a numeric value (could be stored as integer or string)
-                if isinstance(created_at, (str, float)):
+                # Convert string to integer milliseconds
+                if isinstance(created_at, str):
+                    # Try parsing as numeric string first
                     try:
-                        # Try parsing as numeric string first (milliseconds)
-                        asInt = int(float(created_at))
-                        if asInt > 1000000000000:  # Reasonable milliseconds range
+                        asNum = float(created_at)
+                        asInt = int(asNum)
+                        if asInt > 1000000000000:  # Milliseconds since 2001
                             story['created_at'] = asInt
-                            logger.info(f'Converted to int from numeric: {asInt}')
+                            logger.info(f'Parsed as numeric string: {created_at} -> {asInt}')
                             continue
-                    except (ValueError, TypeError):
-                        pass
+                    except (ValueError, TypeError) as e:
+                        logger.debug(f'Not a numeric string: {e}')
                     
-                    # Try parsing as SQLite datetime string (YYYY-MM-DD HH:MM:SS)
-                    if isinstance(created_at, str) and ' ' in created_at:
+                    # Parse SQLite datetime string (YYYY-MM-DD HH:MM:SS)
+                    if ' ' in created_at:
                         try:
+                            logger.info(f'Attempting to parse as datetime: {created_at}')
+                            # Parse naive datetime (assumes server/local time)
                             dt = datetime.strptime(created_at, '%Y-%m-%d %H:%M:%S')
-                            # Convert to milliseconds since epoch
-                            timestamp_ms = int(dt.timestamp() * 1000)
+                            # Convert to seconds since epoch, then to milliseconds
+                            timestamp_seconds = dt.timestamp()
+                            timestamp_ms = int(timestamp_seconds * 1000)
                             story['created_at'] = timestamp_ms
-                            logger.info(f'Converted SQLite datetime to ms: {created_at} -> {timestamp_ms}')
+                            logger.info(f'Successfully converted datetime {created_at} to milliseconds: {timestamp_ms}')
                             continue
-                        except ValueError:
-                            pass
+                        except Exception as parse_error:
+                            logger.error(f'Failed to parse datetime {created_at}: {parse_error}')
                 
-                # If we couldn't parse it, log and leave as-is
-                logger.warning(f'Could not parse timestamp: {created_at}')
+                logger.warning(f'Could not convert timestamp {repr(created_at)} to milliseconds')
         
-        logger.info(f'Returning {len(stories)} stories')
+        logger.info(f'Returning {len(stories)} stories with converted timestamps')
         conn.close()
         return jsonify(stories)
     except Exception as e:
