@@ -97,6 +97,28 @@
             border-radius: 50%;
         }
         
+        .preview-item .file-size {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.8);
+            color: #9ca3af;
+            font-size: 0.75rem;
+            padding: 0.5rem;
+            text-align: center;
+        }
+        
+        .preview-item.size-warning img {
+            opacity: 0.7;
+        }
+        
+        .preview-item.size-warning .file-size {
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            font-weight: bold;
+        }
+        
         .preview-item.uploading .preview-status {
             display: flex;
         }
@@ -295,6 +317,38 @@
         let selectedFiles = [];
         let fileStatuses = {};
 
+        // Constants
+        const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+        const MAX_FILES = 10;
+        const ESTIMATED_UPLOAD_SPEED = 1024 * 1024; // 1MB/s estimate
+
+        // Helper functions
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        function estimateUploadTime(bytes) {
+            const seconds = Math.ceil(bytes / ESTIMATED_UPLOAD_SPEED);
+            if (seconds < 60) return seconds + 's';
+            const minutes = Math.ceil(seconds / 60);
+            return minutes + ' min';
+        }
+
+        function validateFile(file) {
+            const errors = [];
+            if (!file.type.startsWith('image/')) {
+                errors.push('Not an image file');
+            }
+            if (file.size > MAX_FILE_SIZE) {
+                errors.push(`File too large: ${formatFileSize(file.size)} (max ${formatFileSize(MAX_FILE_SIZE)})`);
+            }
+            return errors;
+        }
+
         // Toast notification system
         function showToast(message, type = 'info') {
             const toast = document.createElement('div');
@@ -332,39 +386,75 @@
         });
 
         function handleFiles(files) {
-            selectedFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
-            if (selectedFiles.length === 0) {
-                showToast('Please select image files only.', 'error');
+            const allFiles = Array.from(files);
+            const validFiles = [];
+            const invalidFiles = [];
+            
+            allFiles.forEach(file => {
+                const errors = validateFile(file);
+                if (errors.length === 0) {
+                    validFiles.push(file);
+                } else {
+                    invalidFiles.push({ file, errors });
+                }
+            });
+            
+            if (invalidFiles.length > 0) {
+                invalidFiles.forEach(({ file, errors }) => {
+                    showToast(`${file.name}: ${errors.join(', ')}`, 'error');
+                });
+            }
+            
+            if (validFiles.length === 0) {
                 return;
             }
-            if (selectedFiles.length > 10) {
-                showToast('You can upload up to 10 images at a time.', 'error');
-                selectedFiles = selectedFiles.slice(0, 10);
+            
+            if (validFiles.length > MAX_FILES) {
+                showToast(`Too many files. Showing first ${MAX_FILES} of ${validFiles.length}`, 'error');
+                validFiles.length = MAX_FILES;
             }
+            
+            selectedFiles = validFiles;
             displayPreviews();
         }
 
         function displayPreviews() {
             previewGrid.innerHTML = '';
             fileStatuses = {};
+            
+            let totalSize = 0;
             selectedFiles.forEach((file, index) => {
+                totalSize += file.size;
                 fileStatuses[index] = 'pending';
+                
+                const isOversized = file.size > MAX_FILE_SIZE;
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const div = document.createElement('div');
-                    div.className = 'preview-item relative rounded-lg overflow-hidden shadow-lg';
+                    div.className = `preview-item relative rounded-lg overflow-hidden shadow-lg ${isOversized ? 'size-warning' : ''}`;
                     div.id = `preview-${index}`;
+                    
+                    const fileSize = formatFileSize(file.size);
+                    const uploadTime = estimateUploadTime(file.size);
+                    const sizeWarning = isOversized ? ' (EXCEEDS LIMIT)' : '';
+                    
                     div.innerHTML = `
                         <img src="${e.target.result}" alt="Preview" class="w-full h-48 object-cover">
                         <div class="preview-status">
                             <div class="spinner"></div>
                         </div>
+                        <div class="file-size">${fileSize}${sizeWarning}</div>
                         <p class="text-xs text-gray-400 p-2 bg-gray-900/80 truncate">${file.name}</p>
                     `;
                     previewGrid.appendChild(div);
                 };
                 reader.readAsDataURL(file);
             });
+            
+            // Show upload time estimate
+            const estimatedTime = estimateUploadTime(totalSize);
+            uploadStatus.textContent = `Total size: ${formatFileSize(totalSize)} - Estimated time: ${estimatedTime}`;
+            
             previewContainer.classList.remove('hidden');
         }
 
@@ -395,6 +485,13 @@
                 return;
             }
 
+            // Check for oversized files before attempting upload
+            const oversizedFiles = selectedFiles.filter(f => f.size > MAX_FILE_SIZE);
+            if (oversizedFiles.length > 0) {
+                showToast(`Cannot upload: ${oversizedFiles.length} file(s) exceed 10MB limit`, 'error');
+                return;
+            }
+
             // Verify password
             try {
                 const verifyRes = await fetch('https://shabbyshack-production.up.railway.app/auth/verify-upload-password', {
@@ -408,7 +505,7 @@
                     return;
                 }
             } catch (err) {
-                showToast('Password verification failed. Please check your connection.', 'error');
+                showToast('Connection error. Please check your internet and try again.', 'error');
                 return;
             }
 
@@ -427,7 +524,7 @@
                 const loginData = await loginRes.json();
                 token = loginData.token;
             } catch (err) {
-                showToast('Upload authentication failed. Please try again.', 'error');
+                showToast('Server authentication failed. Please try again later.', 'error');
                 return;
             }
 
@@ -456,11 +553,19 @@
                                 name: name,
                                 text: description,
                                 image: imageData
-                            })
+                            }),
+                            timeout: 60000
                         });
                         
                         if (!res.ok) {
-                            throw new Error(`Server error: ${res.status}`);
+                            if (res.status === 413) {
+                                throw new Error('File too large');
+                            } else if (res.status === 401) {
+                                throw new Error('Authentication expired');
+                            } else if (res.status >= 500) {
+                                throw new Error('Server error - please try again');
+                            }
+                            throw new Error(`Upload failed (${res.status})`);
                         }
                         
                         fileStatuses[index] = 'success';
@@ -471,6 +576,7 @@
                     } catch (err) {
                         console.error('Upload failed:', err);
                         fileStatuses[index] = 'error';
+                        fileStatuses[`${index}-error`] = err.message;
                         const previewItem = document.getElementById(`preview-${index}`);
                         previewItem.classList.remove('uploading');
                         previewItem.classList.add('error');
@@ -479,17 +585,22 @@
                         updateProgress();
                         
                         // Check if all uploads are done
-                        const allDone = Object.values(fileStatuses).every(s => s === 'success' || s === 'error');
+                        const allDone = Object.values(fileStatuses)
+                            .filter(s => typeof s === 'string' && (s === 'success' || s === 'error'))
+                            .length === selectedFiles.length;
+                        
                         if (allDone) {
-                            const successful = Object.values(fileStatuses).filter(s => s === 'success').length;
-                            const failed = Object.values(fileStatuses).filter(s => s === 'error').length;
+                            const successful = Object.values(fileStatuses)
+                                .filter(s => typeof s === 'string' && s === 'success').length;
+                            const failed = Object.values(fileStatuses)
+                                .filter(s => typeof s === 'string' && s === 'error').length;
                             
                             setTimeout(() => {
                                 if (successful > 0) {
                                     showToast(`✓ ${successful} photo(s) uploaded successfully!`, 'success');
                                 }
                                 if (failed > 0) {
-                                    showToast(`✕ ${failed} photo(s) failed. Please try again.`, 'error');
+                                    showToast(`✕ ${failed} photo(s) failed to upload`, 'error');
                                 }
                                 
                                 // Reset form
