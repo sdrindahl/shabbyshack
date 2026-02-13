@@ -10,6 +10,120 @@
         @media (max-width: 1023px) {
             #desktopNav { display: none !important; }
         }
+        
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f2937;
+            color: #f3f4f6;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            border-left: 4px solid #f97316;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            z-index: 50;
+            max-width: 90%;
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        .toast.success {
+            border-left-color: #22c55e;
+        }
+        
+        .toast.error {
+            border-left-color: #ef4444;
+        }
+        
+        @keyframes slideUp {
+            from {
+                bottom: 20px;
+                opacity: 0;
+            }
+            to {
+                bottom: 100px;
+                opacity: 1;
+            }
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid #1f2937;
+            border-top-color: #f97316;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        /* Progress bar */
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background: #374151;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #f97316, #fb923c);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        /* File preview with status */
+        .preview-item {
+            position: relative;
+        }
+        
+        .preview-item .preview-status {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 50%;
+        }
+        
+        .preview-item.uploading .preview-status {
+            display: flex;
+        }
+        
+        .preview-item.success .preview-status {
+            display: flex;
+            background: rgba(34, 197, 94, 0.9);
+        }
+        
+        .preview-item.error .preview-status {
+            display: flex;
+            background: rgba(239, 68, 68, 0.9);
+        }
+        
+        .checkmark::after {
+            content: '✓';
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .error-mark::after {
+            content: '✕';
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body class="bg-[#101014] text-gray-300 font-sans">
@@ -103,6 +217,20 @@
                             <button type="submit" class="w-full md:w-auto bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-10 rounded-full transition duration-300 uppercase tracking-widest">Upload Photos</button>
                         </div>
                     </form>
+                    
+                    <!-- Upload progress section (hidden by default) -->
+                    <div id="progressSection" class="hidden mt-8 pt-8 border-t border-gray-700">
+                        <div class="text-left">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-gray-300 font-semibold" id="progressText">Uploading...</span>
+                                <span class="text-orange-500 font-bold" id="progressPercent">0%</span>
+                            </div>
+                            <div class="progress-container">
+                                <div class="progress-bar" id="progressBar"></div>
+                            </div>
+                            <p class="text-sm text-gray-400" id="uploadStatus">Preparing files...</p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Preview section -->
@@ -158,7 +286,26 @@
         const uploadPassword = document.getElementById('uploadPassword');
         const previewContainer = document.getElementById('previewContainer');
         const previewGrid = document.getElementById('previewGrid');
+        const progressSection = document.getElementById('progressSection');
+        const progressBar = document.getElementById('progressBar');
+        const progressPercent = document.getElementById('progressPercent');
+        const progressText = document.getElementById('progressText');
+        const uploadStatus = document.getElementById('uploadStatus');
+        
         let selectedFiles = [];
+        let fileStatuses = {};
+
+        // Toast notification system
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 4000);
+        }
 
         // Click to select files
         dropZone.addEventListener('click', () => fileInput.click());
@@ -187,21 +334,31 @@
         function handleFiles(files) {
             selectedFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
             if (selectedFiles.length === 0) {
-                alert('Please select image files only.');
+                showToast('Please select image files only.', 'error');
                 return;
+            }
+            if (selectedFiles.length > 10) {
+                showToast('You can upload up to 10 images at a time.', 'error');
+                selectedFiles = selectedFiles.slice(0, 10);
             }
             displayPreviews();
         }
 
         function displayPreviews() {
             previewGrid.innerHTML = '';
-            selectedFiles.forEach(file => {
+            fileStatuses = {};
+            selectedFiles.forEach((file, index) => {
+                fileStatuses[index] = 'pending';
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const div = document.createElement('div');
-                    div.className = 'relative rounded-lg overflow-hidden shadow-lg';
+                    div.className = 'preview-item relative rounded-lg overflow-hidden shadow-lg';
+                    div.id = `preview-${index}`;
                     div.innerHTML = `
                         <img src="${e.target.result}" alt="Preview" class="w-full h-48 object-cover">
+                        <div class="preview-status">
+                            <div class="spinner"></div>
+                        </div>
                         <p class="text-xs text-gray-400 p-2 bg-gray-900/80 truncate">${file.name}</p>
                     `;
                     previewGrid.appendChild(div);
@@ -211,22 +368,30 @@
             previewContainer.classList.remove('hidden');
         }
 
+        function updateProgress() {
+            const total = selectedFiles.length;
+            const uploaded = Object.values(fileStatuses).filter(s => s === 'success' || s === 'error').length;
+            const successful = Object.values(fileStatuses).filter(s => s === 'success').length;
+            
+            const percent = Math.round((uploaded / total) * 100);
+            progressBar.style.width = `${percent}%`;
+            progressPercent.textContent = `${percent}%`;
+            progressText.textContent = `Uploading ${successful}/${total}...`;
+            uploadStatus.textContent = `${uploaded} of ${total} files processed`;
+        }
+
         uploadForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             // Validate password first
             const password = uploadPassword.value.trim();
             if (!password) {
-                alert('Please enter the upload password.');
+                showToast('Please enter the upload password.', 'error');
                 return;
             }
 
             if (selectedFiles.length === 0) {
-                alert('Please select at least one image to upload.');
-                return;
-            }
-            if (selectedFiles.length > 10) {
-                alert('You can upload up to 10 images at a time.');
+                showToast('Please select at least one image to upload.', 'error');
                 return;
             }
 
@@ -238,12 +403,12 @@
                     body: JSON.stringify({ password })
                 });
                 if (!verifyRes.ok) {
-                    alert('Incorrect password. Please try again.');
+                    showToast('Incorrect password. Please try again.', 'error');
                     uploadPassword.value = '';
                     return;
                 }
             } catch (err) {
-                alert('Password verification failed. Please try again.');
+                showToast('Password verification failed. Please check your connection.', 'error');
                 return;
             }
 
@@ -262,19 +427,23 @@
                 const loginData = await loginRes.json();
                 token = loginData.token;
             } catch (err) {
-                alert('Upload failed. Please try again.');
+                showToast('Upload authentication failed. Please try again.', 'error');
                 return;
             }
 
+            // Show progress section and disable form
+            progressSection.classList.remove('hidden');
+            uploadForm.classList.add('opacity-50', 'pointer-events-none');
+            uploadStatus.textContent = 'Starting upload...';
+            
             const name = '';
             const description = 'Uploaded photo';
-            let uploaded = 0, failed = 0;
-            let done = 0;
-            selectedFiles.forEach(file => {
-                // Convert file to base64 and send as JSON
+            
+            selectedFiles.forEach((file, index) => {
                 const reader = new FileReader();
                 reader.onload = async (e) => {
-                    const imageData = e.target.result;  // base64 string
+                    const imageData = e.target.result;
+                    fileStatuses[index] = 'uploading';
                     
                     try {
                         const res = await fetch('https://shabbyshack-production.up.railway.app/stories', {
@@ -286,35 +455,56 @@
                             body: JSON.stringify({
                                 name: name,
                                 text: description,
-                                image: imageData  // base64 string
+                                image: imageData
                             })
                         });
+                        
                         if (!res.ok) {
-                            const errorMsg = await res.text();
-                            console.error('Upload error:', errorMsg);
-                            throw new Error(`Upload failed: ${res.status}`);
+                            throw new Error(`Server error: ${res.status}`);
                         }
-                        uploaded++;
+                        
+                        fileStatuses[index] = 'success';
+                        const previewItem = document.getElementById(`preview-${index}`);
+                        previewItem.classList.remove('uploading');
+                        previewItem.classList.add('success');
+                        previewItem.querySelector('.preview-status').innerHTML = '<div class="checkmark"></div>';
                     } catch (err) {
                         console.error('Upload failed:', err);
-                        failed++;
+                        fileStatuses[index] = 'error';
+                        const previewItem = document.getElementById(`preview-${index}`);
+                        previewItem.classList.remove('uploading');
+                        previewItem.classList.add('error');
+                        previewItem.querySelector('.preview-status').innerHTML = '<div class="error-mark"></div>';
                     } finally {
-                        done++;
-                        if (done === selectedFiles.length) {
-                            if (uploaded > 0) {
-                                alert(`Upload complete! ${uploaded} photo(s) uploaded. They will appear in the Gallery.`);
+                        updateProgress();
+                        
+                        // Check if all uploads are done
+                        const allDone = Object.values(fileStatuses).every(s => s === 'success' || s === 'error');
+                        if (allDone) {
+                            const successful = Object.values(fileStatuses).filter(s => s === 'success').length;
+                            const failed = Object.values(fileStatuses).filter(s => s === 'error').length;
+                            
+                            setTimeout(() => {
+                                if (successful > 0) {
+                                    showToast(`✓ ${successful} photo(s) uploaded successfully!`, 'success');
+                                }
+                                if (failed > 0) {
+                                    showToast(`✕ ${failed} photo(s) failed. Please try again.`, 'error');
+                                }
+                                
+                                // Reset form
                                 uploadPassword.value = '';
-                            } else {
-                                alert(`Upload failed. ${failed} photo(s) could not be uploaded.`);
-                            }
-                            uploadForm.reset();
-                            fileInput.value = '';
-                            selectedFiles = [];
-                            previewContainer.classList.add('hidden');
+                                uploadForm.reset();
+                                fileInput.value = '';
+                                selectedFiles = [];
+                                progressSection.classList.add('hidden');
+                                uploadForm.classList.remove('opacity-50', 'pointer-events-none');
+                                previewContainer.classList.add('hidden');
+                            }, 2000);
                         }
                     }
                 };
-                reader.readAsDataURL(file);  // Start reading the file
+                reader.readAsDataURL(file);
             });
         });
     </script>
