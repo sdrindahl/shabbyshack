@@ -189,6 +189,16 @@ def get_stories():
         c.execute('SELECT * FROM stories ORDER BY created_at DESC')
         rows = c.fetchall()
         stories = [dict(row) for row in rows]
+        
+        # Convert timestamps to ISO 8601 with Z suffix to indicate UTC
+        for story in stories:
+            if story.get('created_at'):
+                # created_at is stored as UTC in SQLite, add Z to indicate UTC
+                created_at = story['created_at']
+                # If it doesn't already have a Z, add it
+                if not created_at.endswith('Z'):
+                    story['created_at'] = created_at + 'Z'
+        
         conn.close()
         return jsonify(stories)
     except Exception as e:
