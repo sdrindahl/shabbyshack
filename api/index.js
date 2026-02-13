@@ -90,13 +90,12 @@ app.get('/stories', (req, res) => {
 
 app.post('/stories', authenticateToken, (req, res) => {
   const { name, text, image, timestamp } = req.body;
-  if (!text) return res.status(400).json({ error: 'Text required' });
   
   // Use client timestamp if provided, otherwise use server time in milliseconds
   const createdAt = timestamp ? parseInt(timestamp, 10) : Date.now();
   
   db.run('INSERT INTO stories (name, text, image, created_at) VALUES (?, ?, ?, ?)', 
-    [name || 'Anonymous', text, image || '', createdAt], 
+    [name || 'Anonymous', text || '', image || '', createdAt], 
     function(err) {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ id: this.lastID });
