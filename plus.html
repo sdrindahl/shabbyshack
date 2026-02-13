@@ -226,11 +226,23 @@
 
                         <div class="border-2 border-dashed border-orange-500 rounded-lg p-8 cursor-pointer hover:bg-gray-800/50 transition" id="dropZone">
                             <input type="file" id="fileInput" name="file" accept="image/*" multiple hidden>
+                            <input type="file" id="cameraInput" name="camera" accept="image/*" capture="environment" hidden>
                             <svg class="w-12 h-12 mx-auto text-orange-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                             </svg>
                             <p class="text-gray-300">Click or drag images here to upload</p>
                             <p class="text-sm text-gray-500 mt-2">PNG, JPG, GIF up to 10MB each</p>
+                            
+                            <!-- Camera button for mobile -->
+                            <div id="cameraButtonContainer" class="mt-6 hidden lg:hidden">
+                                <button type="button" id="cameraButton" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center gap-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22a2 2 0 001.664.89H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                                        <circle cx="12" cy="13" r="3"></circle>
+                                    </svg>
+                                    Take Photo
+                                </button>
+                            </div>
                         </div>
 
 
@@ -360,6 +372,25 @@
                 toast.remove();
             }, 4000);
         }
+
+        // Camera button (mobile)
+        const cameraButton = document.getElementById('cameraButton');
+        const cameraInput = document.getElementById('cameraInput');
+        const cameraButtonContainer = document.getElementById('cameraButtonContainer');
+        
+        // Show camera button on mobile devices
+        if (/iPhone|iPad|iPod|Android|Mobile/.test(navigator.userAgent)) {
+            cameraButtonContainer.classList.remove('hidden');
+        }
+        
+        cameraButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            cameraInput.click();
+        });
+        
+        cameraInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
 
         // Click to select files
         dropZone.addEventListener('click', () => fileInput.click());
