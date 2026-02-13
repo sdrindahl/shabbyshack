@@ -828,6 +828,8 @@
 
             const name = getDeviceInfo();
             const description = 'Uploaded photo';
+            // Capture client-side timestamp in ISO format
+            const clientTimestamp = new Date().toISOString();
             let uploaded = 0, failed = 0;
             let done = 0;
             
@@ -850,7 +852,8 @@
                             body: JSON.stringify({
                                 name: name,
                                 text: description,
-                                image: imageData
+                                image: imageData,
+                                timestamp: clientTimestamp
                             })
                         });
                         if (!res.ok) throw new Error(`Upload failed: ${res.status}`);

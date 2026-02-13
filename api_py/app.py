@@ -189,17 +189,6 @@ def get_stories():
         c.execute('SELECT * FROM stories ORDER BY created_at DESC')
         rows = c.fetchall()
         stories = [dict(row) for row in rows]
-        
-        # Convert timestamps to ISO 8601 with Z suffix to indicate UTC
-        for story in stories:
-            if story.get('created_at'):
-                # created_at is stored as UTC in SQLite, convert to ISO 8601 format
-                created_at = story['created_at']
-                # Convert "2026-02-13 15:37:00" to "2026-02-13T15:37:00Z"
-                if created_at and not created_at.endswith('Z'):
-                    created_at = created_at.replace(' ', 'T') + 'Z'
-                    story['created_at'] = created_at
-        
         conn.close()
         return jsonify(stories)
     except Exception as e:
@@ -221,7 +210,8 @@ def create_story():
             name = data.get('name', 'Anonymous')
             text = data.get('text') or 'Uploaded photo'  # Ensure default if empty or None
             image = data.get('image', '')
-            logger.info(f'JSON payload: name={name}, has_text={bool(text)}, image_size={len(image) if image else 0}')
+            timestamp = data.get('timestamp', None)  # Client-provided timestamp
+            logger.info(f'JSON payload: name={name}, has_text={bool(text)}, image_size={len(image) if image else 0}, timestamp={timestamp}')
             if not image:
                 logger.warning('No image data in JSON payload')
                 return jsonify({'error': 'Image required'}), 400
@@ -232,8 +222,9 @@ def create_story():
             
             name = request.form.get('name', 'Anonymous')
             text = request.form.get('text') or 'Uploaded photo'  # Ensure default if empty or None
+            timestamp = request.form.get('timestamp', None)  # Client-provided timestamp
             
-            logger.info(f'Parsed FormData: name={name}, text={text}')
+            logger.info(f'Parsed FormData: name={name}, text={text}, timestamp={timestamp}')
             
             if 'image' not in request.files:
                 logger.warning('No image file in FormData')
@@ -256,9 +247,13 @@ def create_story():
             logger.warning('No image data provided')
             return jsonify({'error': 'Image required'}), 400
         
+        # Use client timestamp if provided, otherwise use server time
+        if not timestamp:
+            timestamp = datetime.utcnow().isoformat() + 'Z'
+        
         conn = get_db()
         c = conn.cursor()
-        c.execute('INSERT INTO stories (name, text, image) VALUES (?, ?, ?)', (name, text, image))
+        c.execute('INSERT INTO stories (name, text, image, created_at) VALUES (?, ?, ?, ?)', (name, text, image, timestamp))
         conn.commit()
         result_id = c.lastrowid
         conn.close()
