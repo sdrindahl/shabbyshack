@@ -224,7 +224,7 @@
                     ${checkboxOverlay}
                     ${imgTag}
                     <div class="p-4">
-                        <p class="text-xs text-orange-400 mb-2">${story.created_at ? new Date(story.created_at).toLocaleString() : ''}</p>
+                        <p class="text-xs text-orange-400 mb-2">${story.created_at ? formatTimestamp(story.created_at) : ''}</p>
                         <p class="text-xs text-gray-500 mb-3">${story.name ? story.name : 'Unknown Device'}</p>
                         <p class="text-gray-200 italic text-sm line-clamp-3">${story.text}</p>
                     </div>
@@ -744,6 +744,20 @@
             
             return `${browser} on ${os}`;
         }
+        
+        // Helper to format timestamp in user's local timezone
+        function formatTimestamp(isoString) {
+            if (!isoString) return '';
+            try {
+                // Parse the ISO string - JavaScript will automatically handle Z (UTC) designation
+                const date = new Date(isoString);
+                // toLocaleString() converts UTC time to user's local timezone
+                return date.toLocaleString();
+            } catch (e) {
+                console.error('Failed to parse timestamp:', isoString, e);
+                return isoString;
+            }
+        }
 
         // Helper to cache password
         function cachePassword(password) {
@@ -830,6 +844,7 @@
             const description = 'Uploaded photo';
             // Capture client-side timestamp in ISO format
             const clientTimestamp = new Date().toISOString();
+            console.log('Uploading with timestamp:', clientTimestamp);
             let uploaded = 0, failed = 0;
             let done = 0;
             
@@ -842,19 +857,13 @@
                 reader.onload = async (e) => {
                     const imageData = e.target.result;
                     
-                    try {
-                        const res = await fetch('https://shabbyshack-production.up.railway.app/stories', {
+                    try {\n                        const uploadBody = {\n                            name: name,\n                            text: description,\n                            image: imageData,\n                            timestamp: clientTimestamp\n                        };\n                        console.log('Upload body timestamp:', uploadBody.timestamp);\n                        const res = await fetch('https://shabbyshack-production.up.railway.app/stories', {
                             method: 'POST',
                             headers: { 
                                 'Authorization': `Bearer ${token}`,
                                 'Content-Type': 'application/json'
                             },
-                            body: JSON.stringify({
-                                name: name,
-                                text: description,
-                                image: imageData,
-                                timestamp: clientTimestamp
-                            })
+                            body: JSON.stringify(uploadBody)
                         });
                         if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
                         uploaded++;
