@@ -68,6 +68,25 @@ def get_db():
 def init_db():
     try:
         logger.info(f'Initializing database at {DB_PATH}')
+        
+        # Force delete old DATETIME-based database to ensure clean migration
+        if os.path.exists(DB_PATH):
+            try:
+                logger.info(f'Checking existing database schema at {DB_PATH}')
+                conn = sqlite3.connect(DB_PATH)
+                c = conn.cursor()
+                c.execute("PRAGMA table_info(stories)")
+                columns = {col[1]: col[2] for col in c.fetchall()}
+                conn.close()
+                
+                # If created_at is DATETIME, we need to delete and recreate
+                if 'created_at' in columns and 'INT' not in columns['created_at'].upper():
+                    logger.warning(f'Old schema detected (created_at is {columns["created_at"]}), deleting database')
+                    os.remove(DB_PATH)
+                    logger.info('Old database deleted, will recreate with new schema')
+            except Exception as e:
+                logger.warning(f'Could not check schema: {e}')
+        
         conn = get_db()
         c = conn.cursor()
         c.execute('''CREATE TABLE IF NOT EXISTS users (
@@ -76,84 +95,14 @@ def init_db():
             password TEXT
         )''')
         
-        # Check if stories table exists
-        c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='stories'")
-        table_exists = c.fetchone()
-        
-        if not table_exists:
-            # Create new stories table with INTEGER timestamp (milliseconds)
-            logger.info('Creating new stories table with INTEGER created_at')
-            c.execute('''CREATE TABLE IF NOT EXISTS stories (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT,
-                text TEXT,
-                image TEXT,
-                created_at INTEGER DEFAULT 0
-            )''')
-        else:
-            # Check if created_at is DATETIME (old schema)
-            c.execute("PRAGMA table_info(stories)")
-            columns = c.fetchall()
-            created_at_col = next((col for col in columns if col[1] == 'created_at'), None)
-            
-            if created_at_col and 'INT' not in created_at_col[2].upper():
-                logger.info(f'Migrating stories table: created_at is {created_at_col[2]}, converting to INTEGER')
-                try:
-                    # Rename old table
-                    c.execute('ALTER TABLE stories RENAME TO stories_old')
-                    
-                    # Create new table with INTEGER timestamps
-                    c.execute('''CREATE TABLE stories (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        name TEXT,
-                        text TEXT,
-                        image TEXT,
-                        created_at INTEGER DEFAULT 0
-                    )''')
-                    
-                    # Migrate data: parse datetime strings to milliseconds
-                    c.execute('SELECT id, name, text, image, created_at FROM stories_old')
-                    old_stories = c.fetchall()
-                    
-                    for story in old_stories:
-                        story_id, name, text, image, created_at = story
-                        timestamp_ms = 0  # default
-                        
-                        # Try to convert the old format to milliseconds
-                        if created_at:
-                            try:
-                                # If it's a numeric string or number
-                                if isinstance(created_at, (int, float)):
-                                    ts_num = int(created_at)
-                                    if ts_num > 100000000000:  # Looks like milliseconds
-                                        timestamp_ms = ts_num
-                                    elif ts_num > 1000000000:  # Looks like seconds
-                                        timestamp_ms = ts_num * 1000
-                                elif isinstance(created_at, str):
-                                    # Try parsing as datetime string
-                                    dt = datetime.strptime(created_at, '%Y-%m-%d %H:%M:%S')
-                                    timestamp_ms = int(dt.timestamp() * 1000)
-                            except:
-                                logger.warning(f'Could not convert timestamp for story {story_id}: {created_at}')
-                                timestamp_ms = 0
-                        
-                        c.execute(
-                            'INSERT INTO stories (id, name, text, image, created_at) VALUES (?, ?, ?, ?, ?)',
-                            (story_id, name, text, image, timestamp_ms)
-                        )
-                    
-                    # Drop old table
-                    c.execute('DROP TABLE stories_old')
-                    logger.info('Migration completed successfully')
-                except Exception as migration_error:
-                    logger.error(f'Migration failed: {migration_error}', exc_info=True)
-                    # Try to recover
-                    try:
-                        c.execute('DROP TABLE IF EXISTS stories')
-                        c.execute('ALTER TABLE IF EXISTS stories_old RENAME TO stories')
-                    except:
-                        pass
-                    raise
+        # Create stories table with INTEGER timestamps (milliseconds)
+        c.execute('''CREATE TABLE IF NOT EXISTS stories (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            text TEXT,
+            image TEXT,
+            created_at INTEGER DEFAULT 0
+        )''')
         
         c.execute('SELECT * FROM users WHERE username = ?', ('admin',))
         if not c.fetchone():
@@ -162,7 +111,7 @@ def init_db():
             c.execute('INSERT INTO users (username, password) VALUES (?, ?)', ('admin', hash_pw))
         conn.commit()
         conn.close()
-        logger.info('Database initialized successfully')
+        logger.info('Database initialized successfully with INTEGER timestamps')
     except Exception as e:
         logger.error(f'Database initialization failed: {e}', exc_info=True)
         raise
