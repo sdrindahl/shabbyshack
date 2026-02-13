@@ -193,11 +193,12 @@ def get_stories():
         # Convert timestamps to ISO 8601 with Z suffix to indicate UTC
         for story in stories:
             if story.get('created_at'):
-                # created_at is stored as UTC in SQLite, add Z to indicate UTC
+                # created_at is stored as UTC in SQLite, convert to ISO 8601 format
                 created_at = story['created_at']
-                # If it doesn't already have a Z, add it
-                if not created_at.endswith('Z'):
-                    story['created_at'] = created_at + 'Z'
+                # Convert "2026-02-13 15:37:00" to "2026-02-13T15:37:00Z"
+                if created_at and not created_at.endswith('Z'):
+                    created_at = created_at.replace(' ', 'T') + 'Z'
+                    story['created_at'] = created_at
         
         conn.close()
         return jsonify(stories)
