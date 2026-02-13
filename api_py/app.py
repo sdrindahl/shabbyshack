@@ -68,47 +68,56 @@ def get_db():
 def init_db():
     try:
         logger.info(f'Initializing database at {DB_PATH}')
-        logger.info(f'DB_PATH environment: {os.environ.get("DB_PATH", "not set")}')
         
-        # NUCLEAR OPTION: Always check and fix schema on startup
+        # FORCE CHECK: If database exists with wrong schema, DELETE THE ENTIRE FILE
         if os.path.exists(DB_PATH):
-            logger.warning(f'Database exists at {DB_PATH}, checking schema...')
+            logger.warning(f'Database file exists at {DB_PATH}')
+            needs_deletion = False
+            
             try:
                 conn = sqlite3.connect(DB_PATH)
                 c = conn.cursor()
                 
-                # Check the CREATE TABLE statement for stories
+                # Try to get the actual CREATE TABLE statement
                 c.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='stories'")
                 result = c.fetchone()
                 
                 if result:
-                    create_sql = result[0]
-                    logger.warning(f'Existing CREATE TABLE: {create_sql}')
+                    create_sql = result[0].upper()
+                    logger.warning(f'Existing CREATE TABLE found')
                     
-                    # If it mentions DATETIME or has wrong schema, DROP and recreate
-                    if 'DATETIME' in create_sql.upper():
-                        logger.critical('DATETIME schema detected! Dropping and recreating table...')
-                        c.execute('DROP TABLE stories')
-                        conn.commit()
-                        logger.critical('dropped stories table')
+                    # If it's DATETIME, the whole database needs to go
+                    if 'DATETIME' in create_sql:
+                        logger.critical('⚠️ DATETIME column detected! File will be deleted.')
+                        needs_deletion = True
                     else:
-                        # Check actual column type
+                        # Double-check the actual column type
                         c.execute("PRAGMA table_info(stories)")
-                        columns = {col[1]: col[2] for col in c.fetchall()}
-                        if 'created_at' in columns:
-                            col_type = columns['created_at']
-                            logger.info(f'Column created_at type: {col_type}')
-                            if col_type != 'INTEGER':
-                                logger.critical(f'Wrong column type: {col_type}! Dropping table...')
-                                c.execute('DROP TABLE stories')
-                                conn.commit()
-                                logger.critical('Dropped stories table due to wrong column type')
+                        cols = {col[1]: col[2] for col in c.fetchall()}
+                        actual_type = cols.get('created_at', 'UNKNOWN').upper()
+                        logger.warning(f'Actual created_at column type: {actual_type}')
+                        
+                        if actual_type != 'INTEGER':
+                            logger.critical(f'⚠️ Wrong column type: {actual_type}! File will be deleted.')
+                            needs_deletion = True
+                        else:
+                            logger.info('✓ Schema is already correct (INTEGER)')
                 
                 conn.close()
-            except Exception as check_error:
-                logger.error(f'Error checking schema: {check_error}', exc_info=True)
+            except Exception as e:
+                logger.error(f'Error reading schema: {e}')
+                needs_deletion = True
+            
+            # ACTUALLY DELETE THE FILE if needed
+            if needs_deletion:
+                try:
+                    os.remove(DB_PATH)
+                    logger.critical(f'🗑️  DELETED database file: {DB_PATH}')
+                except Exception as delete_error:
+                    logger.error(f'Failed to delete database: {delete_error}')
         
-        # Create new connection for fresh initialization
+        # Create fresh database with correct schema
+        logger.info('Creating database with correct schema...')
         conn = get_db()
         c = conn.cursor()
         
@@ -119,8 +128,7 @@ def init_db():
             password TEXT
         )''')
         
-        # Create stories table with INTEGER timestamps (ALWAYS with this schema)
-        logger.info('Creating/verifying stories table with INTEGER schema')
+        # Create stories table - ALWAYS INTEGER for timestamps
         c.execute('''CREATE TABLE IF NOT EXISTS stories (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
@@ -129,14 +137,17 @@ def init_db():
             created_at INTEGER NOT NULL DEFAULT 0
         )''')
         
-        # Verify final schema
+        # VERIFY the schema is exactly what we want
         c.execute("PRAGMA table_info(stories)")
-        cols = c.fetchall()
-        logger.critical('=== FINAL STORIES TABLE SCHEMA ===')
-        for col in cols:
-            logger.critical(f'  {col[1]}: {col[2]} (not null={col[3]}, default={col[4]})')
+        schema_check = c.fetchall()
+        logger.critical('=== FINAL DATABASE SCHEMA ===')
+        for col in schema_check:
+            col_id, col_name, col_type, col_notnull, col_default, col_pk = col
+            logger.critical(f'  {col_name}: type={col_type}, notnull={col_notnull}, default={col_default}')
+            if col_name == 'created_at' and col_type != 'INTEGER':
+                raise Exception(f'SCHEMA VERIFICATION FAILED: created_at is {col_type}, not INTEGER!')
         
-        # Create admin user if needed
+        # Create admin user
         c.execute('SELECT * FROM users WHERE username = ?', ('admin',))
         if not c.fetchone():
             logger.info('Creating default admin user')
@@ -145,9 +156,9 @@ def init_db():
         
         conn.commit()
         conn.close()
-        logger.critical('=== DATABASE INITIALIZATION COMPLETE ===')
+        logger.critical('=== ✅ DATABASE INITIALIZATION COMPLETE - SCHEMA VERIFIED ===')
     except Exception as e:
-        logger.error(f'Database initialization failed: {e}', exc_info=True)
+        logger.critical(f'❌ DATABASE INITIALIZATION FAILED: {e}', exc_info=True)
         raise
 
 def authenticate_token(f):
