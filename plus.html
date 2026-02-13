@@ -269,7 +269,10 @@
 
                 <!-- Preview section -->
                 <div id="previewContainer" class="hidden">
-                    <h3 class="text-2xl font-bold text-orange-500 mb-6">Preview</h3>
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-2xl font-bold text-orange-500">Preview</h3>
+                        <button type="button" id="clearFilesBtn" class="text-sm px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded transition">Clear All</button>
+                    </div>
                     <div id="previewGrid" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
                 </div>
             </div>
@@ -390,6 +393,18 @@
         
         cameraInput.addEventListener('change', (e) => {
             handleFiles(e.target.files);
+        });
+
+        // Clear files button
+        const clearFilesBtn = document.getElementById('clearFilesBtn');
+        clearFilesBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            selectedFiles = [];
+            fileInput.value = '';
+            cameraInput.value = '';
+            previewContainer.classList.add('hidden');
+            previewGrid.innerHTML = '';
+            fileStatuses = {};
         });
 
         // Click to select files
@@ -634,14 +649,18 @@
                                     showToast(`✕ ${failed} photo(s) failed to upload`, 'error');
                                 }
                                 
-                                // Reset form
-                                uploadPassword.value = '';
+                                // Reset only the files, keep password for convenience
                                 uploadForm.reset();
                                 fileInput.value = '';
+                                cameraInput.value = '';
                                 selectedFiles = [];
                                 progressSection.classList.add('hidden');
                                 uploadForm.classList.remove('opacity-50', 'pointer-events-none');
                                 previewContainer.classList.add('hidden');
+                                
+                                // Keep password field focused for quick re-upload
+                                uploadForm.style.opacity = '1';
+                                uploadForm.style.transition = 'opacity 0.3s ease';
                             }, 2000);
                         }
                     }
