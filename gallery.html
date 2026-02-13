@@ -191,6 +191,20 @@
         });
     }
 
+    // Helper to format timestamp in user's local timezone
+    function formatTimestamp(isoString) {
+        if (!isoString) return '';
+        try {
+            // Parse the ISO string - JavaScript will automatically handle Z (UTC) designation
+            const date = new Date(isoString);
+            // toLocaleString() converts UTC time to user's local timezone
+            return date.toLocaleString();
+        } catch (e) {
+            console.error('Failed to parse timestamp:', isoString, e);
+            return isoString;
+        }
+    }
+
     // --- LOAD STORIES FROM API ON PAGE LOAD ---
     async function loadStoriesFromAPI() {
         const apiUrl = 'https://shabbyshack-production.up.railway.app/stories';
@@ -745,20 +759,6 @@
             return `${browser} on ${os}`;
         }
         
-        // Helper to format timestamp in user's local timezone
-        function formatTimestamp(isoString) {
-            if (!isoString) return '';
-            try {
-                // Parse the ISO string - JavaScript will automatically handle Z (UTC) designation
-                const date = new Date(isoString);
-                // toLocaleString() converts UTC time to user's local timezone
-                return date.toLocaleString();
-            } catch (e) {
-                console.error('Failed to parse timestamp:', isoString, e);
-                return isoString;
-            }
-        }
-
         // Helper to cache password
         function cachePassword(password) {
             localStorage.setItem('uploadPassword', JSON.stringify({
@@ -857,7 +857,15 @@
                 reader.onload = async (e) => {
                     const imageData = e.target.result;
                     
-                    try {\n                        const uploadBody = {\n                            name: name,\n                            text: description,\n                            image: imageData,\n                            timestamp: clientTimestamp\n                        };\n                        console.log('Upload body timestamp:', uploadBody.timestamp);\n                        const res = await fetch('https://shabbyshack-production.up.railway.app/stories', {
+                    try {
+                        const uploadBody = {
+                            name: name,
+                            text: description,
+                            image: imageData,
+                            timestamp: clientTimestamp
+                        };
+                        console.log('Upload body timestamp:', uploadBody.timestamp);
+                        const res = await fetch('https://shabbyshack-production.up.railway.app/stories', {
                             method: 'POST',
                             headers: { 
                                 'Authorization': `Bearer ${token}`,
