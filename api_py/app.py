@@ -57,6 +57,7 @@ PORT = int(os.environ.get('PORT', 5000))
 DEBUG = os.environ.get('FLASK_ENV') == 'development'
 
 logger.info(f'Starting app with PORT={PORT}, DEBUG={DEBUG}')
+logger.info('Delete endpoint is active and ready')
 
 # Force Railway rebuild - ensure delete-with-password endpoint is active
 def get_db():
