@@ -680,8 +680,19 @@
                     <input type="password" id="uploadPassword" class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500" placeholder="Password" required>
                 </div>
                 <div id="nameSection" class="bg-gray-800 p-4 rounded-lg">
-                    <p class="text-sm text-gray-400 mb-2">Upload as: <span id="currentName" class="text-orange-400 font-semibold"></span></p>
-                    <button type="button" id="changeNameBtn" class="text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 py-1 px-3 rounded transition">Change Name</button>
+                    <label for="nameSelect" class="block text-sm text-gray-400 mb-2">Upload as:</label>
+                    <select id="nameSelect" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-gray-200 focus:outline-none focus:border-orange-500" required>
+                        <option value="">Select your name</option>
+                        <option value="Don">Don</option>
+                        <option value="Mary">Mary</option>
+                        <option value="Scott">Scott</option>
+                        <option value="Lilly">Lilly</option>
+                        <option value="Mason">Mason</option>
+                        <option value="Nikki">Nikki</option>
+                        <option value="Krista">Krista</option>
+                        <option value="Mitch">Mitch</option>
+                        <option value="Dominica">Dominica</option>
+                    </select>
                 </div>
                 <div class="text-center">
                     <button type="button" id="addPhotosBtn" class="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-10 rounded-full transition duration-300 uppercase tracking-widest">Add Photos</button>
@@ -728,11 +739,10 @@
             } else {
                 uploadPassword.value = '';
             }
-            // Update name display
-            const currentNameSpan = document.getElementById('currentName');
-            const cachedName = getCachedName();
-            if (currentNameSpan) {
-                currentNameSpan.textContent = cachedName || '(not set)';
+            // Reset name dropdown to empty
+            const nameSelect = document.getElementById('nameSelect');
+            if (nameSelect) {
+                nameSelect.value = '';
             }
         }
         
@@ -749,19 +759,6 @@
             openUploadModal();
         });
         if (closeUploadModalBtn) closeUploadModalBtn.addEventListener('click', closeUploadModal);
-        
-        // Change name button
-        const changeNameBtn = document.getElementById('changeNameBtn');
-        if (changeNameBtn) {
-            changeNameBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                const newName = prompt('What is your name?', getCachedName() || '');
-                if (newName !== null && newName.trim()) {
-                    cacheName(newName.trim());
-                    document.getElementById('currentName').textContent = newName.trim();
-                }
-            });
-        }
         
         uploadModal.addEventListener('click', (e) => {
             if (e.target === uploadModal) closeUploadModal();
@@ -904,15 +901,15 @@
                 // Cache the correct password permanently
                 cachePassword(password);
                 
-                // Prompt for name if not already cached
-                if (!getCachedName()) {
-                    const nameInput = prompt('What is your name?');
-                    if (nameInput && nameInput.trim()) {
-                        cacheName(nameInput.trim());
-                    } else {
-                        cacheName('Anonymous');
-                    }
+                // Get name from dropdown
+                const nameSelect = document.getElementById('nameSelect');
+                const selectedName = nameSelect ? nameSelect.value : '';
+                if (!selectedName) {
+                    alert('Please select your name.');
+                    fileInput.value = '';
+                    return;
                 }
+                cacheName(selectedName);
             } catch (err) {
                 alert('Password verification failed. Please try again.');
                 fileInput.value = '';
