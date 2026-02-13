@@ -62,26 +62,7 @@
                     <button id="deleteSelectedBtn" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg">Delete Selected</button>
                     <button id="cancelSelectBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-6 rounded-lg">Cancel</button>
                 </div>
-                <!-- Filters Section -->
-                <div id="filtersSection" class="mb-8 bg-[#232326] p-6 rounded-lg border border-green-900">
-                    <h3 class="text-lg font-bold text-orange-500 mb-4">Sort By</h3>
-                    <div class="flex gap-4">
-                        <!-- Year -->
-                        <div class="flex-1">
-                            <label class="block text-sm text-gray-400 mb-2">Year</label>
-                            <select id="filterYear" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-200 text-sm">
-                                <option value="">All Years</option>
-                            </select>
-                        </div>
-                        <!-- Uploaded By -->
-                        <div class="flex-1">
-                            <label class="block text-sm text-gray-400 mb-2">Uploaded By</label>
-                            <select id="filterUploadedBy" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-200 text-sm">
-                                <option value="">All</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
+
                 <div class="grid md:grid-cols-3 gap-8" id="journalGrid">
                     <div id="emptyMessage" class="col-span-3 flex flex-col items-center justify-center text-center text-gray-400 text-lg py-12">
                         <svg class="w-12 h-12 mb-4 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01"></path></svg>
@@ -259,64 +240,8 @@
         }
     }
 
-    // --- GLOBAL STORIES AND FILTERS ---
+    // --- GLOBAL STORIES ---
     let allStories = [];
-    let filteredStories = [];
-    
-    // Get unique years from stories
-    function updateYearDropdown() {
-        const years = [...new Set(allStories.map(s => new Date(s.created_at).getFullYear()).filter(Boolean))].sort((a, b) => b - a);
-        const select = document.getElementById('filterYear');
-        const currentValue = select.value;
-        select.innerHTML = '<option value="">All Years</option>';
-        years.forEach(year => {
-            const option = document.createElement('option');
-            option.value = year;
-            option.textContent = year;
-            select.appendChild(option);
-        });
-        select.value = currentValue;
-    }
-    
-    // Get unique uploader names from stories
-    function updateUploaderDropdown() {
-        const uploaders = [...new Set(allStories.map(s => s.name).filter(Boolean))].sort();
-        const select = document.getElementById('filterUploadedBy');
-        const currentValue = select.value;
-        select.innerHTML = '<option value="">All</option>';
-        uploaders.forEach(name => {
-            const option = document.createElement('option');
-            option.value = name;
-            option.textContent = name;
-            select.appendChild(option);
-        });
-        select.value = currentValue;
-    }
-    
-    // Apply filters
-    function applyFilters() {
-        const year = document.getElementById('filterYear').value;
-        const uploadedBy = document.getElementById('filterUploadedBy').value;
-        
-        // Filter
-        filteredStories = allStories.filter(story => {
-            // Year filter
-            if (year) {
-                const storyYear = new Date(story.created_at).getFullYear().toString();
-                if (storyYear !== year) return false;
-            }
-            
-            // Uploader filter
-            if (uploadedBy && story.name !== uploadedBy) return false;
-            
-            return true;
-        });
-        
-        // Sort by date (newest first)
-        filteredStories.sort((a, b) => b.created_at - a.created_at);
-        
-        renderStories(filteredStories);
-    }
     
     // Render stories to the grid
     function renderStories(stories) {
@@ -419,9 +344,9 @@
             if (!res.ok) throw new Error('Failed to fetch stories');
             allStories = await res.json();
             console.log('Loaded', allStories.length, 'stories');
-            updateYearDropdown();
-            updateUploaderDropdown();
-            applyFilters();
+            // Sort by date (newest first)
+            allStories.sort((a, b) => b.created_at - a.created_at);
+            renderStories(allStories);
         } catch (err) {
             const grid = document.getElementById('journalGrid');
             const msg = document.createElement('div');
@@ -573,10 +498,6 @@
     
     // Load stories on page load
     window.addEventListener('DOMContentLoaded', loadStoriesFromAPI);
-    
-    // Add filter event listeners
-    document.getElementById('filterYear').addEventListener('change', applyFilters);
-    document.getElementById('filterUploadedBy').addEventListener('change', applyFilters);
     
     // Show/hide login/logout on page load
     // Nav menu dropdown for logout
@@ -903,17 +824,17 @@
         
         // Helper to cache user name
         function cacheName(name) {
-            localStorage.setItem('uploaderName', name);
+            sessionStorage.setItem('uploaderName', name);
         }
         
         // Helper to get cached name
         function getCachedName() {
-            return localStorage.getItem('uploaderName');
+            return sessionStorage.getItem('uploaderName');
         }
         
         // Helper to clear cached name
         function clearCachedName() {
-            localStorage.removeItem('uploaderName');
+            sessionStorage.removeItem('uploaderName');
         }
         
         // Prompt for name if not cached
