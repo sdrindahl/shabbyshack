@@ -222,8 +222,15 @@
                 return timestamp;
             }
             
-            // toLocaleString() displays in user's local timezone
-            const formatted = date.toLocaleString();
+            // Format: show date and time (hour:minute only, no seconds)
+            const formatted = date.toLocaleString('en-US', { 
+                month: 'numeric', 
+                day: 'numeric', 
+                year: 'numeric', 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true 
+            });
             console.log('Formatted to:', formatted);
             return formatted;
         } catch (e) {
