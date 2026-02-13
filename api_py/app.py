@@ -190,15 +190,45 @@ def get_stories():
         rows = c.fetchall()
         stories = [dict(row) for row in rows]
         
-        # Ensure timestamps are in proper format for JavaScript
+        # Ensure timestamps are returned as integers (milliseconds)
         for story in stories:
             if story.get('created_at'):
                 created_at = story['created_at']
-                # If it's a numeric string (milliseconds), convert to number
-                if isinstance(created_at, str) and created_at.isdigit():
-                    story['created_at'] = int(created_at)
-                # If it's not already ISO format with T, leave as-is (will be numeric)
+                logger.info(f'Processing timestamp: {created_at} (type: {type(created_at).__name__})')
+                
+                # If already an integer, leave as-is
+                if isinstance(created_at, int):
+                    logger.info(f'Timestamp is already int: {created_at}')
+                    continue
+                
+                # If it's a numeric value (could be stored as integer or string)
+                if isinstance(created_at, (str, float)):
+                    try:
+                        # Try parsing as numeric string first (milliseconds)
+                        asInt = int(float(created_at))
+                        if asInt > 1000000000000:  # Reasonable milliseconds range
+                            story['created_at'] = asInt
+                            logger.info(f'Converted to int from numeric: {asInt}')
+                            continue
+                    except (ValueError, TypeError):
+                        pass
+                    
+                    # Try parsing as SQLite datetime string (YYYY-MM-DD HH:MM:SS)
+                    if isinstance(created_at, str) and ' ' in created_at:
+                        try:
+                            dt = datetime.strptime(created_at, '%Y-%m-%d %H:%M:%S')
+                            # Convert to milliseconds since epoch
+                            timestamp_ms = int(dt.timestamp() * 1000)
+                            story['created_at'] = timestamp_ms
+                            logger.info(f'Converted SQLite datetime to ms: {created_at} -> {timestamp_ms}')
+                            continue
+                        except ValueError:
+                            pass
+                
+                # If we couldn't parse it, log and leave as-is
+                logger.warning(f'Could not parse timestamp: {created_at}')
         
+        logger.info(f'Returning {len(stories)} stories')
         conn.close()
         return jsonify(stories)
     except Exception as e:
