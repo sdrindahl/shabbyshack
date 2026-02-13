@@ -184,55 +184,67 @@ def verify_upload_password():
 def get_stories():
     try:
         ensure_db_initialized()
-        import time
         conn = get_db()
         c = conn.cursor()
         c.execute('SELECT * FROM stories ORDER BY created_at DESC')
         rows = c.fetchall()
         stories = [dict(row) for row in rows]
         
+        logger.info(f'Retrieved {len(stories)} stories from database')
+        
         # Ensure timestamps are returned as integers (milliseconds)
-        for story in stories:
-            if story.get('created_at'):
-                created_at = story['created_at']
-                logger.info(f'Raw created_at from DB: {repr(created_at)} (type: {type(created_at).__name__})')
-                
-                # If already an integer and in reasonable range, it's milliseconds
-                if isinstance(created_at, int):
-                    logger.info(f'Already integer: {created_at}')
+        for idx, story in enumerate(stories):
+            created_at = story.get('created_at')
+            logger.info(f'Story {idx}: raw created_at = {repr(created_at)}, type = {type(created_at).__name__}')
+            
+            if not created_at:
+                logger.info(f'Story {idx}: no created_at, skipping')
+                continue
+            
+            # If already an integer in milliseconds range, keep as-is
+            if isinstance(created_at, int):
+                if created_at > 1000000000000:  # Milliseconds range
+                    logger.info(f'Story {idx}: already int milliseconds: {created_at}')
                     continue
-                
-                # Convert string to integer milliseconds
-                if isinstance(created_at, str):
-                    # Try parsing as numeric string first
+            
+            # Handle string timestamps (both numeric and datetime)
+            if isinstance(created_at, str):
+                # Try numeric string first
+                if created_at.replace('.', '', 1).replace('-', '', 1).isdigit():
                     try:
-                        asNum = float(created_at)
-                        asInt = int(asNum)
-                        if asInt > 1000000000000:  # Milliseconds since 2001
-                            story['created_at'] = asInt
-                            logger.info(f'Parsed as numeric string: {created_at} -> {asInt}')
+                        ms = int(float(created_at))
+                        if ms > 100000000000:
+                            story['created_at'] = ms
+                            logger.info(f'Story {idx}: converted numeric string to ms: {ms}')
                             continue
-                    except (ValueError, TypeError) as e:
-                        logger.debug(f'Not a numeric string: {e}')
-                    
-                    # Parse SQLite datetime string (YYYY-MM-DD HH:MM:SS)
-                    if ' ' in created_at:
-                        try:
-                            logger.info(f'Attempting to parse as datetime: {created_at}')
-                            # Parse naive datetime (assumes server/local time)
-                            dt = datetime.strptime(created_at, '%Y-%m-%d %H:%M:%S')
-                            # Convert to seconds since epoch, then to milliseconds
-                            timestamp_seconds = dt.timestamp()
-                            timestamp_ms = int(timestamp_seconds * 1000)
-                            story['created_at'] = timestamp_ms
-                            logger.info(f'Successfully converted datetime {created_at} to milliseconds: {timestamp_ms}')
-                            continue
-                        except Exception as parse_error:
-                            logger.error(f'Failed to parse datetime {created_at}: {parse_error}')
+                    except (ValueError, TypeError):
+                        pass
                 
-                logger.warning(f'Could not convert timestamp {repr(created_at)} to milliseconds')
+                # Parse as SQLite datetime: YYYY-MM-DD HH:MM:SS
+                if '-' in created_at and ' ' in created_at and ':' in created_at:
+                    try:
+                        logger.info(f'Story {idx}: attempting datetime parse of: {created_at}')
+                        dt = datetime.strptime(created_at, '%Y-%m-%d %H:%M:%S')
+                        # Convert to milliseconds (dt.timestamp() gives seconds in epoch)
+                        timestamp_ms = int(dt.timestamp() * 1000)
+                        story['created_at'] = timestamp_ms
+                        logger.info(f'Story {idx}: parsed datetime {created_at} -> {timestamp_ms} ms')
+                        continue
+                    except Exception as e:
+                        logger.error(f'Story {idx}: failed to parse datetime {created_at}: {e}')
+                        # Don't return as string - return something testable
+                        story['created_at'] = 0
+                        continue
+            
+            logger.warning(f'Story {idx}: could not convert {repr(created_at)}, setting to 0')
+            story['created_at'] = 0
         
         logger.info(f'Returning {len(stories)} stories with converted timestamps')
+        
+        # Debug: log first story's timestamp before returning
+        if stories:
+            logger.info(f'First story after conversion: {stories[0]}')
+        
         conn.close()
         return jsonify(stories)
     except Exception as e:
