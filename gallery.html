@@ -90,8 +90,8 @@
                         <button id="closeDeletePasswordModalBtn" class="absolute top-2 right-2 text-gray-400 hover:text-orange-500 text-2xl font-bold">&times;</button>
                         <h3 class="text-2xl font-bold mb-4 text-orange-500 text-center">Delete Photos</h3>
                         <p class="text-gray-400 mb-4 text-center">Enter password to delete selected photos</p>
-                        <form id="deletePasswordForm" class="flex flex-col gap-4">
-                            <input id="deletePassword" type="password" placeholder="Password" class="px-4 py-2 rounded bg-gray-800 text-gray-200" required />
+                        <form id="deletePasswordForm" class="flex flex-col gap-4" novalidate>
+                            <input id="deletePassword" type="password" placeholder="Password" class="px-4 py-2 rounded bg-gray-800 text-gray-200" />
                             <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg">Delete</button>
                             <span id="deletePasswordStatus" class="text-sm text-center"></span>
                         </form>
