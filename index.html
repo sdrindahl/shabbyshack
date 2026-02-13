@@ -152,6 +152,17 @@
                     <button type="button" id="addPhotosBtn" class="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-10 rounded-full transition duration-300 uppercase tracking-widest">Add Photos</button>
                 </div>
             </form>
+            
+            <!-- Uploading Message -->
+            <div id="uploadingMessage" class="hidden text-center py-8">
+                <div class="animate-spin inline-block mb-4">
+                    <svg class="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+                <p class="text-lg text-gray-300 mt-4">Uploading your photos...</p>
+            </div>
 
             <input type="file" id="fileInput" name="file" accept="image/*" multiple hidden>
         </div>
@@ -304,6 +315,10 @@
             let uploaded = 0, failed = 0;
             let done = 0;
             
+            // Show uploading message
+            uploadForm.classList.add('hidden');
+            document.getElementById('uploadingMessage').classList.remove('hidden');
+            
             files.forEach(file => {
                 const reader = new FileReader();
                 reader.onload = async (e) => {
@@ -331,14 +346,18 @@
                         done++;
                         if (done === files.length) {
                             if (uploaded > 0) {
-                                alert(`Upload complete! ${uploaded} photo(s) uploaded. They will appear in the Gallery.`);
                                 uploadPassword.value = '';
+                                uploadForm.reset();
+                                fileInput.value = '';
+                                closeUploadModal();
+                                document.getElementById('uploadingMessage').classList.add('hidden');
+                                uploadForm.classList.remove('hidden');
+                                window.location.href = 'gallery.html';
                             } else {
                                 alert(`Upload failed. ${failed} photo(s) could not be uploaded.`);
+                                uploadForm.classList.remove('hidden');
+                                document.getElementById('uploadingMessage').classList.add('hidden');
                             }
-                            uploadForm.reset();
-                            fileInput.value = '';
-                            closeUploadModal();
                         }
                     }
                 };
